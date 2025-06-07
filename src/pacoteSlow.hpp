@@ -7,7 +7,7 @@ class PacoteSlow {
 private:
     bitset<128> sid;
     bitset<27> ttl;
-    bitset<5> flags;
+    bitset<5> flags; // Connect, Revive, ACK, Accept/Reject, More Bits
     uint32_t seqNum;
     uint32_t ackNum;
     uint16_t window;

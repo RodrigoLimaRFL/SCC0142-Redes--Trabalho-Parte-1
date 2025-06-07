@@ -5,7 +5,7 @@ using namespace std;
 PacoteSlow::PacoteSlow() {
     sid.reset();
     ttl.reset();
-    flags.reset();
+    flags.reset(); // Connect, Revive, ACK, Accept/Reject, More Bits
     seqNum = 0;
     ackNum = 0;
     window = 0;
