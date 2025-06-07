@@ -1,1 +1,58 @@
 #include "mensagens.hpp"
+
+PacoteSlow sendData(bitset<128> uuid, bitset<27> sttl, uint32_t ultimoSeqNum, 
+uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
+    /**
+     * Função para enviar dados de um pacote Slow.
+     * 
+     * Params:
+     * - uuid: Identificador único do pacote (128 bits).
+     * - sttl: Tempo de vida do pacote (27 bits).
+     * - ultimoSeqNum: Último número de sequência enviado (32 bits).
+     * - ultimoAckNum: Último número de reconhecimento recebido (32 bits).
+     * - window: Número de bytes disponiveis na janela deslizante do peripheral
+     * - maisDados: Se a mensagem atual possue dados adicionais a serem enviados
+     * - data: Dados a serem enviados (vetor de bytes).
+     * 
+     * Returns:
+     * - PacoteSlow: Um objeto PacoteSlow contendo os dados do pacote a ser enviado.
+     */
+    cout << "-----------------------------" << endl;
+    cout << "Enviando dados:" << endl;
+    cout << "UUID: " << uuid.to_string() << endl;
+    cout << "TTL: " << sttl.to_string() << endl;
+    cout << "Último SeqNum: " << ultimoSeqNum << endl;
+    cout << "Último AckNum: " << ultimoAckNum << endl;
+    cout << "Janela: " << window << endl;
+    cout << "Existem Mais Dados?: " << maisDados << endl;
+    cout << "Dados: ";
+    for (uint8_t byte : data) {
+        cout << static_cast<char>(byte) << " ";
+    }
+    cout << endl;
+    cout << "-----------------------------" << endl;
+
+
+    int numBytes = data.size();
+
+    PacoteSlow pacote;
+
+    pacote.setSid(uuid);
+    pacote.setSttl(sttl);
+    if(maisDados)
+    {
+        pacote.setFlags(bitset<5>("10000")); // Connect, nesse caso nao tem mais bytes
+    }
+    else
+    {
+        pacote.setFlags(bitset<5>("10001")); // Connect e more bits
+    }
+    pacote.setSeqNum(ultimoSeqNum + 1); // Proximo número de sequência
+    pacote.setAckNum(ultimoAckNum); // Número de reconhecimento atual
+    pacote.setWindow(window); // Janela de bytes enviados
+    pacote.setFid(0);
+    pacote.setFo(0);
+    pacote.setData(data, numBytes);
+
+    return pacote;
+}
