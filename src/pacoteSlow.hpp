@@ -3,10 +3,12 @@
 
 #include "utils.hpp"
 
+#define TAMANHO_CABECALHO_PACOTE 32 // 32 bytes
+
 class PacoteSlow {
 private:
     bitset<128> sid;
-    bitset<27> ttl;
+    bitset<27> sttl;
     bitset<5> flags; // Connect, Revive, ACK, Accept/Reject, More Bits
     uint32_t seqNum;
     uint32_t ackNum;
@@ -21,7 +23,7 @@ public:
     PacoteSlow();
 
     bool setSid(const bitset<128>& newSid);
-    bool setTtl(const bitset<27>& newTtl);
+    bool setSttl(const bitset<27>& newSttl);
     bool setFlags(const bitset<5>& newFlags);
     bool setSeqNum(uint32_t newSeqNum);
     bool setAckNum(uint32_t newAckNum);
