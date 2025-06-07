@@ -1,5 +1,5 @@
-#ifndef SOCKETUDP_H
-#define SOCKETUDP_H
+#ifndef SOCKETUDP_HPP
+#define SOCKETUDP_HPP
 
 #include <string>
 #include <cstddef>
