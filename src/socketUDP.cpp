@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+#include <iostream>
+#include <cstring>
+#include <cstdint>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#include "socketUDP.hpp"
+
+using namespace std;
+
+void createSocket(int packet, string hostname, int port) {
+
+//    CRIA SOCKET         // IPv4 // // UDP //
+    int UDP_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if(UDP_socket < 0) {
+        cout << "Erro ao criar o socket" << endl;
+        return;
+    }
+
+
+    // TRADUZ NOME DO SERVER PRA IP E PEGA OS DADOS DO SERVIDOR
+    hostent* server = gethostbyname(hostname.c_str());
+    if(server == nullptr) {
+        cout << "Host não encontrado" << endl;
+        return;
+    }
+
+
+    // CONFIGURAR ENDEREÇO DO SERVER
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET; // Endereco tipo IPv4
+    server_addr.sin_port = htons(port); // Conversao da porta para o formato de rede
+    memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length); // IP do server
+
+
+
+    // ENVIO                   (socket)  (endereco e tamanho do pacote)       (destino)
+    ssize_t sent_bytes = sendto(UDP_socket, &packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&server_addr),
+                                  sizeof(server_addr));
+
+    if(sent_bytes < 0) {
+        cout << "Erro ao enviar o pacote" << endl;
+        close(UDP_socket);
+        return;
+    }
+
+    cout << "Pacote enviado com sucesso (" << sent_bytes << " bytes)\n";
+    cout << "Esperando resposta..." << endl;
+
+
+
+    
+
+
+
+//  RECEPCAO DOS PACOTES    
+    uint8_t response[1472];
+    sockaddr_in from_addr{};
+    socklen_t from_len = sizeof(from_addr);
+
+    ssize_t received_bytes = recvfrom(UDP_socket, response, 1472, 0,
+                                (sockaddr*)&from_addr, &from_len);
+
+    if (received_bytes < 0) {
+        perror("Erro ao receber pacote");
+    } else {
+        std::cout << "Resposta recebida com " << received_bytes << " bytes\n";
+
+    }
+
+
+
+    close(UDP_socket);
+
+    return;
+}
