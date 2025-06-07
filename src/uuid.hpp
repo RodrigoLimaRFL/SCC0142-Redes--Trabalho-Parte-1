@@ -1,9 +1,7 @@
 #ifndef UUIDV8
     #define UUIDV8
 
-    #include <bitset>
-    #include <random>
-    #include <iostream>
+    #include "utils.hpp"
 
     using namespace std;
 
