@@ -4,7 +4,7 @@ using namespace std;
 
 PacoteSlow::PacoteSlow() {
     sid.reset();
-    ttl.reset();
+    sttl.reset();
     flags.reset(); // Connect, Revive, ACK, Accept/Reject, More Bits
     seqNum = 0;
     ackNum = 0;
@@ -19,8 +19,8 @@ bool PacoteSlow::setSid(const bitset<128>& newSid) {
     return true;
 }
 
-bool PacoteSlow::setTtl(const bitset<27>& newTtl) {
-    ttl = newTtl;
+bool PacoteSlow::setSttl(const bitset<27>& newSttl) {
+    sttl = newSttl;
     return true;
 }
 
@@ -59,8 +59,8 @@ bool PacoteSlow::setFo(uint8_t newFo) {
 }
 
 bool PacoteSlow::setData(const vector<uint8_t>& newData, int numBytes) {
-    if(numBytes < 0 || numBytes > 180) {
-        cerr << "Erro: Tamanho de dados inválido. Deve ser entre 0 e 180 bytes." << endl;
+    if(numBytes < 0 || numBytes > 1440) {
+        cerr << "Erro: Tamanho de dados inválido. Deve ser entre 0 e 1440 bytes." << endl;
         return false;
     }
 
@@ -101,10 +101,10 @@ vector<uint8_t> PacoteSlow::getPacote() {
     }
 
     // TTL + Flags
-    uint32_t ttlValue = ttl.to_ulong();
+    uint32_t sttlValue = sttl.to_ulong();
     uint32_t flagsValue = flags.to_ulong();
-    uint32_t ttlFlags = (ttlValue << 5) | flagsValue;
-    adicionar4BytesAoPacote(pacote, ttlFlags);
+    uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
+    adicionar4BytesAoPacote(pacote, sttlFlags);
 
     // SeqNum
     adicionar4BytesAoPacote(pacote, seqNum);
