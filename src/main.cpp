@@ -2,7 +2,7 @@
 #include "fragmentacao.hpp"
 
 int main() {
-    cout << "Iniciando fragmentação de dados..." << endl;
+    /*cout << "Iniciando fragmentação de dados..." << endl;
 
     vector<uint8_t> dados;
     for(int i = 0; i < 3000; i++)
@@ -18,9 +18,16 @@ int main() {
     for(size_t i = 0; i < dadosFragmentados.size(); i++) {
         printf("Pacote %zu: %u\n", i, dadosFragmentados[i][0]);
         printf("Tamanho do pacote %zu: %zu bytes\n", i, dadosFragmentados[i].size());
+    }*/
+
+    PacoteSlow pacote;
+    vector<uint8_t> pacoteBytes = pacote.getPacote();
+
+    cout << "Tamanho do pacote: " << pacoteBytes.size() << " bytes" << endl;
+
+    for(size_t i = 0; i < pacoteBytes.size(); i++) {
+        cout << "Byte " << i << ": " << static_cast<int>(pacoteBytes[i]) << endl;
     }
-
-
 
     return 0;
 }
