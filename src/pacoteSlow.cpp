@@ -59,7 +59,7 @@ bool PacoteSlow::setFo(uint8_t newFo) {
 }
 
 bool PacoteSlow::setData(const vector<uint8_t>& newData, int numBytes) {
-    if(numBytes < 0 || numBytes > 1440) {
+    if(numBytes < 0 || numBytes > TAMANHO_MAXIMO_DADOS) {
         cerr << "Erro: Tamanho de dados inválido. Deve ser entre 0 e 1440 bytes." << endl;
         return false;
     }
