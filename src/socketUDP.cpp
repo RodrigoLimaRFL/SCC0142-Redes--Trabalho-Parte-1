@@ -59,7 +59,7 @@ void createSocket(PacoteSlow packet, string hostname, int port) {
 
 
     // ENVIO                   (socket)  (endereco e tamanho do pacote)       (destino)
-    ssize_t sent_bytes = sendto(UDP_socket, &fodase, sizeof(fodase), 0, reinterpret_cast<sockaddr*>(&server_addr),
+    ssize_t sent_bytes = sendto(UDP_socket, &fodase, 32, 0, reinterpret_cast<sockaddr*>(&server_addr),
                                   sizeof(server_addr));
 
     if(sent_bytes < 0) {
