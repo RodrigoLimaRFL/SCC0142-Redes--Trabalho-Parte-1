@@ -53,7 +53,7 @@ PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32
     return pacote;
 }
 
-PacoteSlow sendData(bitset<128> uuid, bitset<27> sttl, uint32_t ultimoSeqNum, 
+PacoteSlow setPacketToSend(bitset<128> uuid, bitset<27> sttl, uint32_t ultimoSeqNum, 
 uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
     /**
      * Função para enviar dados de um pacote Slow.
@@ -80,7 +80,7 @@ uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
     cout << "Existem Mais Dados?: " << maisDados << endl;
     cout << "Dados: ";
     for (uint8_t byte : data) {
-        cout << static_cast<char>(byte) << " ";
+        cout << static_cast<char>(byte);
     }
     cout << endl;
     cout << "-----------------------------" << endl;

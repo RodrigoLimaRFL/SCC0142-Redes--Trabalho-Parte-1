@@ -67,6 +67,11 @@ void sendReceive(PacoteSlow packet) {
 
     //  RECEPCAO DOS PACOTES    
     uint8_t response[1472];
+
+    // Limpa o buffer de resposta
+    memset(response, 0, sizeof(response));
+
+
     sockaddr_in from_addr{};
     socklen_t from_len = sizeof(from_addr);
 
@@ -91,8 +96,16 @@ void sendReceive(PacoteSlow packet) {
         cout << static_cast<int>(response[i]) << "[" << i << "]" << " ";
     }
 
-    return;
-}
+    // O byte 16 contém as flags nos seus 5 bits menos significativos.
+    uint8_t flags_byte = response[16]; 
+
+    // Imprime as flags da menos significativa (MB) para a mais significativa (C)
+    cout << "\nFlags (na ordem MB, A/R, ACK, R, C): "; 
+    for(int i = 0; i < 5; i++) {
+        cout << ((flags_byte >> i) & 1) << " ";
+    }
+    cout << endl;
+
 
 void closeConnection() {
     close(UDP_socket);
