@@ -1,21 +1,33 @@
 #include "mensagens.hpp"
 
 PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32_t acknum) {
+    /**
+     * Função para enviar um pacote de desconexão.
+     * 
+     * Params:
+     * - uuid: Identificador único do pacote (128 bits).
+     * - sttl: Tempo de vida do pacote (27 bits).
+     * - seqnum: Número de sequência do pacote (32 bits).
+     * - acknum: Número de reconhecimento do pacote (32 bits).
+     * 
+     * Returns:
+     * - PacoteSlow: Um objeto PacoteSlow contendo os dados do pacote de desconexão.
+     */
     PacoteSlow pacote;
 
-    // seta o sid recebido da central
+    // Seta o sid recebido da central
     pacote.setSid(uuid);
-    // seta o sttl recebido da central
+    // Seta o sttl recebido da central
     pacote.setSttl(sttl);
 
-    // define as flags para:
-    /*
-    Connect: 1
-    Revive: 1
-    Ack: 1
-    Accept/Reject: 0
-    More Bits: 0
-    */
+    /**
+     * Definindo as flags do pacote:
+     * - Connect: 1
+     * - Revive: 1
+     * - Ack: 1
+     * - Accept/Reject: 0
+     * - More Bits: 0
+     */
     bitset<5> flags;
     flags.reset();
 
@@ -25,9 +37,9 @@ PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32
 
     pacote.setFlags(flags);
 
-    // define o seqnum (proximo)
+    // Define o seqnum (proximo)
     pacote.setSeqNum(seqnum);
-    // define o acnum (seknum anterior)
+    // Define o acnum (seknum anterior)
     pacote.setAckNum(acknum);
 
     // Outros campos padrão
@@ -40,8 +52,6 @@ PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32
 
     return pacote;
 }
-
-
 
 PacoteSlow sendData(bitset<128> uuid, bitset<27> sttl, uint32_t ultimoSeqNum, 
 uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
@@ -102,6 +112,14 @@ uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
 
 
 PacoteSlow connect(uint16_t tamBufferRecebimento) {
+    /** 
+     * Função para criar um pacote de conexão.
+     *  Params:
+     * - tamBufferRecebimento: Tamanho do buffer de recebimento do peripheral.
+     * 
+     * Returns:
+     * - PacoteSlow: Um objeto PacoteSlow contendo os dados do pacote de conexão.
+     */
 
     PacoteSlow pacoteConnect;
 
