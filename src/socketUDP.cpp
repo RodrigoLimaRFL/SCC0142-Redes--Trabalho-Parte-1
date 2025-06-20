@@ -5,12 +5,46 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <algorithm>
 
 #include "socketUDP.hpp"
 
 using namespace std;
 
-void createSocket(int packet, string hostname, int port) {
+void createSocket(PacoteSlow packet, string hostname, int port) {
+
+    // cout << "pacote do getPacote" << endl;
+
+    // for(int j = 0; j < 1472; j++) {
+    //     cout << packet[j] << "a ";
+    // }
+
+    vector<uint8_t> packet_test = packet.getPacote();
+
+    // reverse(packet_test.begin(), packet_test.end());
+
+    cout << "pacote do getPacote" << endl;
+
+    for(int j = 0; j < packet_test.size(); j++) {
+        cout << static_cast<int>(packet_test[j]) << "(" << j << ") ";
+    }
+
+    cout << endl;
+    cout << "tamanho " << endl;
+    cout << packet_test.size() << " \n" << endl;
+
+    uint8_t* fodase = packet_test.data();
+
+    // char* poha = (char*) fodase;
+
+
+    // cout << "FODASEE" << endl;
+
+    // for(int j = 0; j < packet_test.size(); j++) {
+    //     cout << static_cast<char>(fodase[j]) << "(" << j << ") ";
+    // }
+
+    
 
 //    CRIA SOCKET         // IPv4 // // UDP //
     int UDP_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -37,7 +71,7 @@ void createSocket(int packet, string hostname, int port) {
 
 
     // ENVIO                   (socket)  (endereco e tamanho do pacote)       (destino)
-    ssize_t sent_bytes = sendto(UDP_socket, &packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&server_addr),
+    ssize_t sent_bytes = sendto(UDP_socket, fodase, packet_test.size(), 0, reinterpret_cast<sockaddr*>(&server_addr),
                                   sizeof(server_addr));
 
     if(sent_bytes < 0) {
@@ -68,6 +102,14 @@ void createSocket(int packet, string hostname, int port) {
     } else {
         std::cout << "Resposta recebida com " << received_bytes << " bytes\n";
 
+    }
+
+    for(int i = 0; i < 1472; i++) {
+        cout << (response[i]) << "   ";
+    }
+
+    for(int i = 0; i < 1472; i++) {
+        cout << static_cast<int>(response[i]) << " " << i << "   ";
     }
 
 

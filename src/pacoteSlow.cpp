@@ -96,7 +96,7 @@ bool PacoteSlow::setFo(uint8_t newFo) {
     return true;
 }
 
-bool PacoteSlow::setData(const vector<uint8_t>& newData, int numBytes) {
+bool PacoteSlow::setData(const vector<uint8_t>& newData, size_t numBytes) {
     /**
      * Define os dados do pacote.
      * 
@@ -122,7 +122,7 @@ bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor
     /**
      * Adiciona um valor de 4 bytes ao final do pacote.
      */
-    for(int i = 0; i < 4; i++) {
+    for(int i = 3; i >= 0; i--) {
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
@@ -132,7 +132,7 @@ bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor
     /**
      * Adiciona um valor de 2 bytes ao final do pacote.
      */
-    for(int i = 0; i < 2; i++) {
+    for(int i = 1; i >= 0; i--) {
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
@@ -159,6 +159,8 @@ vector<uint8_t> PacoteSlow::getPacote() {
     uint32_t flagsValue = flags.to_ulong();
     uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
     adicionar4BytesAoPacote(pacote, sttlFlags);
+
+    cout << static_cast<long long int> (sttlFlags) << " dsafsr" << endl;
 
     // SeqNum
     adicionar4BytesAoPacote(pacote, seqNum);
