@@ -4,6 +4,7 @@
 #include "utils.hpp"
 
 #define TAMANHO_CABECALHO_PACOTE 32 // 32 bytes
+#define TAMANHO_MAXIMO_DADOS 1440 // 1440 bytes
 
 class PacoteSlow {
 private:
