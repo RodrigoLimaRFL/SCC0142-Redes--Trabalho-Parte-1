@@ -33,6 +33,17 @@ public:
     bool setFo(uint8_t newFo);
     bool setData(const vector<uint8_t>& newData, size_t numBytes);
 
+    vector<uint8_t> getSid();
+    uint32_t getSttl();
+    bitset<5> getFlags();
+    uint32_t getSeqNum();
+    uint32_t getAckNum();
+    uint16_t getWindow();
+    uint8_t getFid();
+    uint8_t getFo();
+    vector<uint8_t> getData();
+
+    PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido);
     vector<uint8_t> getPacote();
 };
 

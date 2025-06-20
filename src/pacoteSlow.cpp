@@ -64,10 +64,6 @@ bool PacoteSlow::setAckNum(uint32_t newAckNum) {
     /**
      * Define o número de reconhecimento do pacote (ACKNUM).
      */
-    if(flags[2] == 0) {
-        cerr << "Erro: ACK só pode ser definido quando a flag ACK é 1" << endl;
-        return false;
-    }
     ackNum = newAckNum;
     return true;
 }
@@ -116,6 +112,138 @@ bool PacoteSlow::setData(const vector<uint8_t>& newData, size_t numBytes) {
 
     data.assign(newData.begin(), newData.begin() + numBytes);
     return true;
+}
+
+vector<uint8_t> PacoteSlow::getSid(){
+    /**
+     * Retorna o identificador único do pacote (SID) como um vetor de bytes.
+     */
+    vector<uint8_t> sidBytes(16);
+    for(int i = 0; i < 16; i++) {
+        sidBytes[i] = static_cast<uint8_t>(sid.to_ulong() >> (i * 8));
+    }
+    return sidBytes;
+}
+
+uint32_t PacoteSlow::getSttl() {
+    /**
+     * Retorna o número de sequência do pacote (SEQNUM).
+     */
+    return sttl.to_ulong();
+}
+
+bitset<5> PacoteSlow::getFlags() {
+    /**
+     * Retorna as flags do pacote.
+     */
+    return flags;
+}
+
+uint32_t PacoteSlow::getSeqNum() {
+    /**
+     * Retorna o número de sequência do pacote (SEQNUM).
+     */
+    return seqNum;
+}
+
+uint32_t PacoteSlow::getAckNum() {
+    /**
+     * Retorna o número de reconhecimento do pacote (ACKNUM).
+     */
+    return ackNum;
+}
+
+uint16_t PacoteSlow::getWindow() {
+    /**
+     * Retorna a janela de bytes do pacote (WINDOW).
+     */
+    return window;
+}
+
+uint8_t PacoteSlow::getFid() {
+    /**
+     * Retorna o identificador do fluxo do pacote (FID).
+     */
+    return fid;
+}
+
+uint8_t PacoteSlow::getFo() {
+    /**
+     * Retorna o offset do fluxo do pacote (FO).
+     */
+    return fo;
+}
+
+vector<uint8_t> PacoteSlow::getData() {
+    /**
+     * Retorna os dados do pacote como um vetor de bytes.
+     */
+    return data;
+}
+
+PacoteSlow PacoteSlow::criarPacote(vector<uint8_t>& pacoteRecebido)
+{
+    PacoteSlow pacote;
+
+    size_t tamanhoPacote = pacoteRecebido.size();
+
+    cout << "Tamanho do pacote recebido: " << tamanhoPacote << " bytes" << endl;
+
+    if(tamanhoPacote < TAMANHO_CABECALHO_PACOTE) {
+        cerr << "Erro: Pacote recebido muito pequeno." << endl;
+        return pacote; // Retorna um pacote vazio
+    }
+
+    // SID
+    vector<uint8_t> sidBytes(pacoteRecebido.begin(), pacoteRecebido.begin() + 16);
+    bitset<128> sidBits;
+    for(int i = 0; i < 16; i++) {
+        for(int j = 0; j < 8; j++) {
+            sidBits[i * 8 + j] = (sidBytes[i] >> j) & 0x01;
+        }
+    }
+    pacote.setSid(sidBits);
+
+    // TTL + Flags
+    uint32_t sttlFlags = 0;
+    for(int i = 0; i < 4; i++) {
+        sttlFlags |= (pacoteRecebido[16 + i] << (i * 8));
+    }
+    bitset<27> sttlBits((sttlFlags >> 5) & 0x07FFFFFF); // Extrai os 27 bits de TTL
+    bitset<5> flagsBits(sttlFlags & 0x1F); // Extrai os 5 bits de flags
+    pacote.setSttl(sttlBits);
+    pacote.setFlags(flagsBits);
+
+    // SeqNum
+    uint32_t seqNum = 0;
+    for(int i = 0; i < 4; i++) {
+        seqNum |= (pacoteRecebido[20 + i] << (i * 8));
+    }
+    pacote.setSeqNum(seqNum);
+
+    // AckNum
+    uint32_t ackNum = 0;
+    for(int i = 0; i < 4; i++) {
+        ackNum |= (pacoteRecebido[24 + i] << (i * 8));
+    }
+    pacote.setAckNum(ackNum);
+
+    // Window
+    uint16_t window = 0;
+    for(int i = 0; i < 2; i++) {
+        window |= (pacoteRecebido[28 + i] << (i * 8));
+    }
+    pacote.setWindow(window);
+    
+    // Fid + Fo
+    pacote.setFid(pacoteRecebido[30]);
+    pacote.setFo(pacoteRecebido[31]);
+
+    // Dados
+    vector<uint8_t> dados(pacoteRecebido.begin() + 32, pacoteRecebido.end());
+    pacote.setData(dados, dados.size());
+
+    cout << "Pacote criado com sucesso." << endl;
 }
 
 // Função corrigida para adicionar 4 bytes em LITTLE-ENDIAN
