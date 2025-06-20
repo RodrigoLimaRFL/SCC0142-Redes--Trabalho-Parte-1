@@ -58,7 +58,7 @@ bool PacoteSlow::setFo(uint8_t newFo) {
     return true;
 }
 
-bool PacoteSlow::setData(const vector<uint8_t>& newData, int numBytes) {
+bool PacoteSlow::setData(const vector<uint8_t>& newData, size_t numBytes) {
     if(numBytes < 0 || numBytes > 1440) {
         cerr << "Erro: Tamanho de dados inválido. Deve ser entre 0 e 1440 bytes." << endl;
         return false;
@@ -74,14 +74,14 @@ bool PacoteSlow::setData(const vector<uint8_t>& newData, int numBytes) {
 }
 
 bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
-    for(int i = 0; i < 4; i++) {
+    for(int i = 3; i >= 0; i--) {
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
 }
 
 bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor) {
-    for(int i = 0; i < 2; i++) {
+    for(int i = 1; i >= 0; i--) {
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
@@ -105,6 +105,8 @@ vector<uint8_t> PacoteSlow::getPacote() {
     uint32_t flagsValue = flags.to_ulong();
     uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
     adicionar4BytesAoPacote(pacote, sttlFlags);
+
+    cout << static_cast<long long int> (sttlFlags) << " dsafsr" << endl;
 
     // SeqNum
     adicionar4BytesAoPacote(pacote, seqNum);

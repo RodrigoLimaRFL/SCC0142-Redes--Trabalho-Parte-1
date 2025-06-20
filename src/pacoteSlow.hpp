@@ -30,7 +30,7 @@ public:
     bool setWindow(uint16_t newWindow);
     bool setFid(uint8_t newFid);
     bool setFo(uint8_t newFo);
-    bool setData(const vector<uint8_t>& newData, int numBytes);
+    bool setData(const vector<uint8_t>& newData, size_t numBytes);
 
     vector<uint8_t> getPacote();
 };

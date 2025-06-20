@@ -5,9 +5,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <bits/stdc++.h>
+#include "pacoteSlow.hpp"
 
 using namespace std;
 
-void createSocket(int packet, string hostname, int port);
+void createSocket(PacoteSlow packet, string hostname, int port);
 
 #endif
