@@ -7,6 +7,10 @@ void printPacoteSlow(PacoteSlow pacote);
 
 int main() {
 
+    PacoteSlow pacote = connect(1);
+
+    createSocket(pacote, "slow.gmelodie.com", 7033);
+
 
     return 0;
 }

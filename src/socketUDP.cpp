@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <algorithm>
 
 #include "socketUDP.hpp"
 
@@ -20,17 +21,28 @@ void createSocket(PacoteSlow packet, string hostname, int port) {
 
     vector<uint8_t> packet_test = packet.getPacote();
 
+    // reverse(packet_test.begin(), packet_test.end());
+
     cout << "pacote do getPacote" << endl;
 
     for(int j = 0; j < packet_test.size(); j++) {
         cout << static_cast<int>(packet_test[j]) << "(" << j << ") ";
     }
 
-    cout << "\n" << endl;
+    cout << endl;
     cout << "tamanho " << endl;
-    cout << packet_test.size() << endl;
+    cout << packet_test.size() << " \n" << endl;
 
     uint8_t* fodase = packet_test.data();
+
+    // char* poha = (char*) fodase;
+
+
+    // cout << "FODASEE" << endl;
+
+    // for(int j = 0; j < packet_test.size(); j++) {
+    //     cout << static_cast<char>(fodase[j]) << "(" << j << ") ";
+    // }
 
     
 
@@ -59,7 +71,7 @@ void createSocket(PacoteSlow packet, string hostname, int port) {
 
 
     // ENVIO                   (socket)  (endereco e tamanho do pacote)       (destino)
-    ssize_t sent_bytes = sendto(UDP_socket, &fodase, 32, 0, reinterpret_cast<sockaddr*>(&server_addr),
+    ssize_t sent_bytes = sendto(UDP_socket, fodase, packet_test.size(), 0, reinterpret_cast<sockaddr*>(&server_addr),
                                   sizeof(server_addr));
 
     if(sent_bytes < 0) {
@@ -93,7 +105,11 @@ void createSocket(PacoteSlow packet, string hostname, int port) {
     }
 
     for(int i = 0; i < 1472; i++) {
-        cout << response[i] << " ";
+        cout << (response[i]) << "   ";
+    }
+
+    for(int i = 0; i < 1472; i++) {
+        cout << static_cast<int>(response[i]) << " " << i << "   ";
     }
 
 
