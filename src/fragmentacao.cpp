@@ -7,8 +7,6 @@ vector<vector<uint8_t>> fragmentarDados(vector<uint8_t> dados)
     bool pacoteExtra = (numBytes % TAMANHO_MAXIMO_DADOS) > 0;
     vector<vector<uint8_t>> dadosParaPacotes;
 
-    cout << "b" << endl;
-
     if(pacoteExtra) numPacotes++;
 
     for(int i = 0; i < numPacotes; i++)
@@ -27,8 +25,6 @@ vector<vector<uint8_t>> fragmentarDados(vector<uint8_t> dados)
 
         dadosParaPacotes.push_back(pacote);
     }
-
-    cout << "c" << endl;
 
     return dadosParaPacotes;
 }
@@ -54,7 +50,13 @@ bool fragmentarEEnviarDados(
             maisDados, 
             pacotes[i]
         );
+        pacote.setFid(fragmentId); // Define o ID do fragmento como 0
+        pacote.setFo(i); // Define o offset do fragmento como o índice do pacote
         ultimoSeqNum++; // Incrementa o número de sequência para o próximo pacote
+    }
+
+    if(pacotes.size() > 1) {
+        fragmentId++; // Se houve fragmentação, incrementa o ID do fragmento
     }
 
     return true; // Retorna true se todos os pacotes foram enviados com sucesso
