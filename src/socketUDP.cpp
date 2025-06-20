@@ -106,6 +106,8 @@ void sendReceive(PacoteSlow packet) {
     }
     cout << endl;
 
+}
+
 
 void closeConnection() {
     close(UDP_socket);
