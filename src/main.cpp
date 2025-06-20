@@ -9,9 +9,10 @@ int main() {
 
     PacoteSlow pacote = connect(1);
 
-    createSocket(pacote, "slow.gmelodie.com", 7033);
+    startSocket("slow.gmelodie.com", 7033);
+    sendReceive(pacote);
 
-
+    closeConnection();
     return 0;
 }
 

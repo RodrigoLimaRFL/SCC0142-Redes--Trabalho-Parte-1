@@ -9,6 +9,9 @@
 
 using namespace std;
 
-void createSocket(PacoteSlow packet, string hostname, int port);
+void startSocket(string hostname, int port);
+void sendReceive(PacoteSlow packet);
+void closeConnection();
+
 
 #endif
