@@ -1,6 +1,6 @@
 #include "mensagens.hpp"
 
-PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32_t acknum) {
+PacoteSlow createDisconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32_t acknum) {
     /**
      * Função para enviar um pacote de desconexão.
      * 
@@ -15,11 +15,6 @@ PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32
      */
     PacoteSlow pacote;
 
-    // Seta o sid recebido da central
-    pacote.setSid(uuid);
-    // Seta o sttl recebido da central
-    pacote.setSttl(sttl);
-
     /**
      * Definindo as flags do pacote:
      * - Connect: 1
@@ -28,21 +23,19 @@ PacoteSlow Disconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, uint32
      * - Accept/Reject: 0
      * - More Bits: 0
      */
-    bitset<5> flags;
-    flags.reset();
-
-    flags[0] = 1;
-    flags[1] = 1;
-    flags[2] = 1;
-
+    std::bitset<5> flags(std::string("11100"));
     pacote.setFlags(flags);
 
-    // Define o seqnum (proximo)
+    // Define o SID recebido da central
+    pacote.setSid(uuid);
+    // Define o STTL recebido da central
+    pacote.setSttl(sttl);
+    // Define o SeqNum (proximo)
     pacote.setSeqNum(seqnum);
-    // Define o acnum (seknum anterior)
+    // Define o AckNum (seknum anterior)
     pacote.setAckNum(acknum);
 
-    // Outros campos padrão
+    // Define outros campos padrão
     pacote.setWindow(0);
     pacote.setFid(0);
     pacote.setFo(0);
@@ -94,11 +87,11 @@ uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
     pacote.setSttl(sttl);
     if(maisDados)
     {
-        pacote.setFlags(bitset<5>("10000")); // Connect, nesse caso nao tem mais bytes
+        pacote.setFlags(bitset<5>("00101")); // Connect, Revive, Ack, Accept/Reject, More Bits
     }
     else
     {
-        pacote.setFlags(bitset<5>("10001")); // Connect e more bits
+        pacote.setFlags(bitset<5>("00100")); // Connect, Revive, Ack, Accept/Reject, More Bits
     }
     pacote.setSeqNum(ultimoSeqNum + 1); // Proximo número de sequência
     pacote.setAckNum(ultimoAckNum); // Número de reconhecimento atual
@@ -111,7 +104,7 @@ uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
 }
 
 
-PacoteSlow connect(uint16_t tamBufferRecebimento) {
+PacoteSlow createConnect(uint16_t tamBufferRecebimento) {
     /** 
      * Função para criar um pacote de conexão.
      *  Params:
@@ -121,27 +114,22 @@ PacoteSlow connect(uint16_t tamBufferRecebimento) {
      * - PacoteSlow: Um objeto PacoteSlow contendo os dados do pacote de conexão.
      */
 
+    // Inicializa o pacote de conexão
     PacoteSlow pacoteConnect;
 
-    // NIL UUID
-    // STTL 0
-
-    // bitset<5> flags;
-    // flags.reset();// flags: connect(1)
-
-    // flags[0] = 1;
-
+    /**
+     * Definindo as flags do pacote:
+     * - Connect: 1
+     * - Revive: 0
+     * - Ack: 0
+     * - Accept/Reject: 0
+     * - More Bits: 0
+     */
     std::bitset<5> flags(std::string("10000"));
     pacoteConnect.setFlags(flags);
 
-    //seqNum 0
-    // ackNum 0
-
-    pacoteConnect.setWindow(tamBufferRecebimento); // window
-
-    // fid 0
-    // fo 0
-    // data.clear
+    // Seta a Window do pacote de conexão
+    pacoteConnect.setWindow(tamBufferRecebimento);
 
     return pacoteConnect;
 }

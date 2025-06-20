@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "pacoteSlow.hpp"
+
 using namespace std;
 
 class Session {
@@ -24,5 +26,7 @@ public:
     bool setSeqNum(uint32_t newSeqNum);
     uint32_t getAckNum();
     bool setAckNum(uint32_t newAckNum);
+    bool setValues(PacoteSlow pacote);
+    bitset<128> getUUIDBits();
 };
 #endif

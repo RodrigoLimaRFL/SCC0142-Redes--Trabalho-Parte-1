@@ -88,7 +88,7 @@ bool fragmentarEEnviarDados(
 
     cout << pacotes[0].size() << endl; // Exibe o tamanho do pacote enviado
 
-    for(int i = 0; i < pacotes.size(); i++) {
+    for(size_t i = 0; i < pacotes.size(); i++) {
         cout << "Pacote " << i << ": ";
         for(uint8_t byte : pacotes[i]) {
             cout << static_cast<int>(byte) << " "; // Exibe os bytes do pacote

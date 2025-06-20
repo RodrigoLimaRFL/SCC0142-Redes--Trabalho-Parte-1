@@ -2,30 +2,30 @@
 #include "fragmentacao.hpp"
 #include "session.hpp"
 
-void printPacoteSlow(PacoteSlow pacote);
-
 int main() {
     Session session;
+    PacoteSlow response;
 
-    PacoteSlow pacote = connect(1);
-
+    // Inicia o socket UDP
     startSocket("slow.gmelodie.com", 7033);
-    sendReceive(pacote);
 
-    vector<uint8_t> data = {'A', 'B', 'C', 'D', 'E'}; // Exemplo de dados
+    // Envia um pacote de conexão para o servidor
+    response = sendReceive(createConnect(1));
 
-    fragmentarEEnviarDados(
-        session.getUUID(),
-        session.getSTTL(),
-        session.getSeqNum(),
-        session.getAckNum(),
-        1472,
-        data
-    );
+    // Atualiza a sessão com os valores recebidos
+    session.setValues(response);
+    
+    // vector<uint8_t> data = {'A', 'B', 'C', 'D', 'E'}; // Exemplo de dados
+
+    // fragmentarEEnviarDados(
+    //     session.getUUID(),
+    //     session.getSTTL(),
+    //     session.getSeqNum(),
+    //     session.getAckNum(),
+    //     1472,
+    //     data
+    // );
 
     return 0;
 }
 
-void printPacoteSlow(PacoteSlow pacote) {
-
-}

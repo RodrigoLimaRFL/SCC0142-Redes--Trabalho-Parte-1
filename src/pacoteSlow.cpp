@@ -118,16 +118,25 @@ vector<uint8_t> PacoteSlow::getSid(){
     /**
      * Retorna o identificador único do pacote (SID) como um vetor de bytes.
      */
-    vector<uint8_t> sidBytes(16);
+    vector<uint8_t> sidBytes(16, 0); // Inicializa os 16 bytes com 0
+
+    // Itera por cada um dos 16 bytes que formam o SID
     for(int i = 0; i < 16; i++) {
-        sidBytes[i] = static_cast<uint8_t>(sid.to_ulong() >> (i * 8));
+        // Itera por cada um dos 8 bits que formam o byte atual
+        for(int j = 0; j < 8; j++) {
+            // Se o bit na posição correspondente do bitset<128> for 1...
+            if (sid[i * 8 + j]) {
+                // ...ativa o bit correspondente no byte atual.
+                sidBytes[i] |= (1 << j);
+            }
+        }
     }
     return sidBytes;
 }
 
 uint32_t PacoteSlow::getSttl() {
     /**
-     * Retorna o número de sequência do pacote (SEQNUM).
+     * Retorna o tempo de vida do pacote (STTL) como um valor inteiro.
      */
     return sttl.to_ulong();
 }
@@ -181,16 +190,20 @@ vector<uint8_t> PacoteSlow::getData() {
     return data;
 }
 
-// Função corrigida para adicionar 4 bytes em LITTLE-ENDIAN
 bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
+    /**
+     * Adiciona um valor de 4 bytes ao pacote.
+     */
     for(int i = 0; i < 4; i++) { // Envia o byte menos significativo primeiro
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
 }
 
-// Função corrigida para adicionar 2 bytes em LITTLE-ENDIAN
 bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor) {
+    /**
+     * Adiciona um valor de 2 bytes ao pacote.
+     */
     for(int i = 0; i < 2; i++) { // Envia o byte menos significativo primeiro
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
@@ -219,7 +232,7 @@ vector<uint8_t> PacoteSlow::getPacote() {
     uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
     adicionar4BytesAoPacote(pacote, sttlFlags);
 
-    cout << static_cast<long long int> (sttlFlags) << " dsafsr" << endl;
+    cout << "Flags: " << static_cast<long long int> (sttlFlags) << endl;
 
     // SeqNum
     adicionar4BytesAoPacote(pacote, seqNum);
