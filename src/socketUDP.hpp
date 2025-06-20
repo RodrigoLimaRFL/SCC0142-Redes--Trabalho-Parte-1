@@ -10,7 +10,7 @@
 using namespace std;
 
 void startSocket(string hostname, int port);
-void sendReceive(PacoteSlow packet);
+PacoteSlow sendReceive(PacoteSlow packet);
 void closeConnection();
 
 

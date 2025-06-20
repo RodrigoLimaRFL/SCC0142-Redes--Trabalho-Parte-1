@@ -181,7 +181,66 @@ vector<uint8_t> PacoteSlow::getData() {
     return data;
 }
 
-PacoteSlow PacoteSlow::criarPacote(vector<uint8_t>& pacoteRecebido)
+// Função corrigida para adicionar 4 bytes em LITTLE-ENDIAN
+bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
+    for(int i = 0; i < 4; i++) { // Envia o byte menos significativo primeiro
+        pacote.push_back((valor >> (i * 8)) & 0xFF);
+    }
+    return true;
+}
+
+// Função corrigida para adicionar 2 bytes em LITTLE-ENDIAN
+bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor) {
+    for(int i = 0; i < 2; i++) { // Envia o byte menos significativo primeiro
+        pacote.push_back((valor >> (i * 8)) & 0xFF);
+    }
+    return true;
+}
+
+vector<uint8_t> PacoteSlow::getPacote() {
+    /**
+     * Gera o pacote completo a partir dos campos definidos na classe.
+     */
+    vector<uint8_t> pacote;
+
+    // SID
+
+    for(int i = 0; i < 16; i++) {
+        uint8_t byte = 0;
+        for(int j = 0; j < 8; j++) {
+            byte |= (sid[i * 8 + j] << j);
+        }
+        pacote.push_back(byte);
+    }
+
+    // TTL + Flags
+    uint32_t sttlValue = sttl.to_ulong();
+    uint32_t flagsValue = flags.to_ulong();
+    uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
+    adicionar4BytesAoPacote(pacote, sttlFlags);
+
+    cout << static_cast<long long int> (sttlFlags) << " dsafsr" << endl;
+
+    // SeqNum
+    adicionar4BytesAoPacote(pacote, seqNum);
+
+    // AckNum
+    adicionar4BytesAoPacote(pacote, ackNum);
+
+    // Window
+    adicionar2BytesAoPacote(pacote, window);
+
+    // Fid + Fo
+    pacote.push_back(fid);
+    pacote.push_back(fo);
+
+    // Dados
+    pacote.insert(pacote.end(), data.begin(), data.end());
+
+    return pacote;
+}
+
+PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido)
 {
     PacoteSlow pacote;
 
@@ -244,63 +303,6 @@ PacoteSlow PacoteSlow::criarPacote(vector<uint8_t>& pacoteRecebido)
     pacote.setData(dados, dados.size());
 
     cout << "Pacote criado com sucesso." << endl;
-}
-
-// Função corrigida para adicionar 4 bytes em LITTLE-ENDIAN
-bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
-    for(int i = 0; i < 4; i++) { // Envia o byte menos significativo primeiro
-        pacote.push_back((valor >> (i * 8)) & 0xFF);
-    }
-    return true;
-}
-
-// Função corrigida para adicionar 2 bytes em LITTLE-ENDIAN
-bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor) {
-    for(int i = 0; i < 2; i++) { // Envia o byte menos significativo primeiro
-        pacote.push_back((valor >> (i * 8)) & 0xFF);
-    }
-    return true;
-}
-
-vector<uint8_t> PacoteSlow::getPacote() {
-    /**
-     * Gera o pacote completo a partir dos campos definidos na classe.
-     */
-    vector<uint8_t> pacote;
-
-    // SID
-
-    for(int i = 0; i < 16; i++) {
-        uint8_t byte = 0;
-        for(int j = 0; j < 8; j++) {
-            byte |= (sid[i * 8 + j] << j);
-        }
-        pacote.push_back(byte);
-    }
-
-    // TTL + Flags
-    uint32_t sttlValue = sttl.to_ulong();
-    uint32_t flagsValue = flags.to_ulong();
-    uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
-    adicionar4BytesAoPacote(pacote, sttlFlags);
-
-    cout << static_cast<long long int> (sttlFlags) << " dsafsr" << endl;
-
-    // SeqNum
-    adicionar4BytesAoPacote(pacote, seqNum);
-
-    // AckNum
-    adicionar4BytesAoPacote(pacote, ackNum);
-
-    // Window
-    adicionar2BytesAoPacote(pacote, window);
-
-    // Fid + Fo
-    pacote.push_back(fid);
-    pacote.push_back(fo);
-
-    // Dados
-    pacote.insert(pacote.end(), data.begin(), data.end());
 
     return pacote;
 }

@@ -37,7 +37,7 @@ void startSocket(string hostname, int port) {
     return;
 }
 
-void sendReceive(PacoteSlow packet) {
+PacoteSlow sendReceive(PacoteSlow packet) {
     // Send
     vector<uint8_t> packet_test = packet.getPacote();
 
@@ -59,7 +59,7 @@ void sendReceive(PacoteSlow packet) {
     if(sent_bytes < 0) {
         cout << "Erro ao enviar o pacote" << endl;
         close(UDP_socket);
-        return;
+        return {};
     }
 
     cout << "Pacote enviado com sucesso (" << sent_bytes << " bytes)\n";
@@ -106,6 +106,10 @@ void sendReceive(PacoteSlow packet) {
     }
     cout << endl;
 
+    vector<uint8_t> response_vector(response, response + received_bytes);
+    PacoteSlow pacoteRecebido = criarPacote(response_vector);
+
+    return pacoteRecebido;
 }
 
 

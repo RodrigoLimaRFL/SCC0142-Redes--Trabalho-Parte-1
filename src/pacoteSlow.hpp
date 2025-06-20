@@ -43,8 +43,9 @@ public:
     uint8_t getFo();
     vector<uint8_t> getData();
 
-    PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido);
     vector<uint8_t> getPacote();
 };
+
+PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido);
 
 #endif
