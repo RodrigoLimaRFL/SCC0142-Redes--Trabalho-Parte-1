@@ -131,7 +131,7 @@ PacoteSlow connect(uint16_t tamBufferRecebimento) {
 
     // flags[0] = 1;
 
-    std::bitset<5> flags(std::string("11111"));
+    std::bitset<5> flags(std::string("10000"));
     pacoteConnect.setFlags(flags);
 
     //seqNum 0

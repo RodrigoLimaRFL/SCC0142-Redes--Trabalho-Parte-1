@@ -118,21 +118,17 @@ bool PacoteSlow::setData(const vector<uint8_t>& newData, size_t numBytes) {
     return true;
 }
 
+// Função corrigida para adicionar 4 bytes em LITTLE-ENDIAN
 bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
-    /**
-     * Adiciona um valor de 4 bytes ao final do pacote.
-     */
-    for(int i = 3; i >= 0; i--) {
+    for(int i = 0; i < 4; i++) { // Envia o byte menos significativo primeiro
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
 }
 
+// Função corrigida para adicionar 2 bytes em LITTLE-ENDIAN
 bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor) {
-    /**
-     * Adiciona um valor de 2 bytes ao final do pacote.
-     */
-    for(int i = 1; i >= 0; i--) {
+    for(int i = 0; i < 2; i++) { // Envia o byte menos significativo primeiro
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;

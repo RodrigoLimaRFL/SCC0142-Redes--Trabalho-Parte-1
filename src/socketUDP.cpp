@@ -104,12 +104,12 @@ void createSocket(PacoteSlow packet, string hostname, int port) {
 
     }
 
-    for(int i = 0; i < 1472; i++) {
-        cout << (response[i]) << "   ";
+    for(int i = 0; i < received_bytes; i++) {
+        cout << (response[i]) << " ";
     }
 
-    for(int i = 0; i < 1472; i++) {
-        cout << static_cast<int>(response[i]) << " " << i << "   ";
+    for(int i = 0; i < received_bytes; i++) {
+        cout << static_cast<int>(response[i]) << " [" << i << "]" << " ";
     }
 
 
