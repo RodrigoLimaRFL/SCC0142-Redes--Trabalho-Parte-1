@@ -1,5 +1,5 @@
-#ifndef 3WAYCONNECT_HPP
-    #define 3WAYCONNECT_HPP
+#ifndef THREE_WAYCONNECT_HPP
+    #define THREE_WAYCONNECT_HPP
 
     void connect();
 #endif

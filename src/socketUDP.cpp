@@ -6,7 +6,7 @@ using namespace std;
 int UDP_socket; // Socket UDP
 sockaddr_in server_addr{}; // Endereço do servidor
 
-void startSocket(string hostname, int port) {
+bool startSocket(string hostname, int port) {
     /**
      * Função para iniciar o socket UDP.
      * 
@@ -21,14 +21,14 @@ void startSocket(string hostname, int port) {
     UDP_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if(UDP_socket < 0) {
         cout << "Erro ao criar o socket" << endl;
-        return;
+        return false;
     }
 
     // TRADUZ NOME DO SERVER PRA IP E PEGA OS DADOS DO SERVIDOR
     hostent* server = gethostbyname(hostname.c_str());
     if(server == nullptr) {
         cout << "Host não encontrado" << endl;
-        return;
+        return false;
     }
 
     // CONFIGURAR ENDEREÇO DO SERVER
@@ -36,7 +36,17 @@ void startSocket(string hostname, int port) {
     server_addr.sin_port = htons(port); // Conversao da porta para o formato de rede
     memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length); // IP do server
 
-    return;
+    // Definir timeout de 5 segundos para recepção
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    if (setsockopt(UDP_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        perror("Erro ao configurar timeout de recepção");
+        return false;
+    }
+
+    return true;
 }
 
 PacoteSlow sendReceive(PacoteSlow packet) {
@@ -54,7 +64,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     vector<uint8_t> packet_vector = packet.getPacote();
 
-    cout << "pacote do getPacote" << endl;
+    /*cout << "pacote do getPacote" << endl;
 
     for(int j = 0; j < (int) packet_vector.size(); j++) {
         cout << "[" << static_cast<int>(packet_vector[j]) << " - (" << j << ")] ";
@@ -62,6 +72,8 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     cout << endl;
     cout << "Tamanho " << packet_vector.size() << endl;
+    */
+
 
     // uint8_t* packet_data = packet_vector.data();
 
@@ -78,6 +90,8 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     cout << "Pacote enviado com sucesso (" << sent_bytes << " bytes)\n";
     cout << "Esperando resposta..." << endl;
+
+
 
     //  === RECEIVE ===  
     // Cria um buffer para armazenar a resposta
@@ -99,7 +113,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
     }
 
     // Exibe o conteúdo da resposta em formato de caracteres e inteiros
-    cout << "Response in Chars:" << endl;
+    /*cout << "Response in Chars:" << endl;
     for(int i = 0; i < (int) received_bytes; i++) {
         cout << (response[i]) << " ";
     }
@@ -117,7 +131,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
     for(int i = 0; i < 5; i++) {
         cout << ((flags_byte >> i) & 1) << " ";
     }
-    cout << endl;
+    cout << endl;*/
 
     // Cria um vetor de bytes a partir da resposta recebida
     // e converte para um objeto PacoteSlow

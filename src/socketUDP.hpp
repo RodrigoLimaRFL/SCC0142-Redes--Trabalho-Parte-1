@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void startSocket(string hostname, int port);
+bool startSocket(string hostname, int port);
 PacoteSlow sendReceive(PacoteSlow packet);
 void closeConnection();
 

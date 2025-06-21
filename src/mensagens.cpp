@@ -63,21 +63,6 @@ uint32_t ultimoAckNum, uint16_t window, bool maisDados, vector<uint8_t> data) {
      * Returns:
      * - PacoteSlow: Um objeto PacoteSlow contendo os dados do pacote a ser enviado.
      */
-    cout << "-----------------------------" << endl;
-    cout << "Enviando dados:" << endl;
-    cout << "UUID: " << uuid.to_string() << endl;
-    cout << "TTL: " << sttl.to_string() << endl;
-    cout << "Último SeqNum: " << ultimoSeqNum << endl;
-    cout << "Último AckNum: " << ultimoAckNum << endl;
-    cout << "Janela: " << window << endl;
-    cout << "Existem Mais Dados?: " << maisDados << endl;
-    cout << "Dados: ";
-    for (uint8_t byte : data) {
-        cout << static_cast<char>(byte);
-    }
-    cout << endl;
-    cout << "-----------------------------" << endl;
-
 
     int numBytes = data.size();
 

@@ -1,6 +1,6 @@
 #include "session.hpp"
 
-Session::Session() : uuid(16, 0), sttl(0), seqNum(0), ackNum(0) {}
+Session::Session() :running(false), uuid(16, 0), sttl(0), seqNum(0), ackNum(0) {}
 /**
  * Construtor da classe Session.
  * Inicializa os campos da sessão com valores padrão:
@@ -70,6 +70,7 @@ bool Session::setSTTL(uint32_t newSTTL) {
      * - true se o STTL foi definido com sucesso.
      */
     sttl = newSTTL;
+    startTTLTimer();
     return true;
 }
 
@@ -121,6 +122,30 @@ bool Session::setAckNum(uint32_t newAckNum) {
     return true;
 }
 
+uint16_t Session::getWindow() {
+    /**
+     * Retorna a janela de controle da sessão (WINDOW).
+     * 
+     * Returns:
+     * - uint16_t: A janela de controle da sessão.
+     */
+    return window;
+}
+
+bool Session::setWindow(uint16_t newWindow) {
+    /**
+     * Define a janela de controle da sessão (WINDOW).
+     * 
+     * Params:
+     * - newWindow: Nova janela de controle a ser definida.
+     * 
+     * Returns:
+     * - true se a janela foi definida com sucesso.
+     */
+    window = newWindow;
+    return true;
+}
+
 bool Session::setValues(PacoteSlow pacote) {
     /**
      * Define os valores da sessão a partir de um pacote recebido.
@@ -135,5 +160,32 @@ bool Session::setValues(PacoteSlow pacote) {
     setSTTL(pacote.getSttl());
     setSeqNum(pacote.getSeqNum());
     setAckNum(pacote.getAckNum());
+    setWindow(pacote.getWindow());
     return true;
 }
+
+Session::~Session() {
+    stopTTLTimer();  // Ensure the thread ends when the session is destroyed
+}
+
+void Session::startTTLTimer() {
+    if (running) return; // Already running
+
+    running = true;
+    ttlThread = std::thread([this]() {
+        while (running && sttl > 0) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            if (sttl > 0) {
+                --sttl;
+            }
+        }
+    });
+}
+
+void Session::stopTTLTimer() {
+    running = false;
+    if (ttlThread.joinable()) {
+        ttlThread.join();
+    }
+}
+

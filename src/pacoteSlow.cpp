@@ -114,7 +114,7 @@ bool PacoteSlow::setData(const vector<uint8_t>& newData, size_t numBytes) {
     return true;
 }
 
-vector<uint8_t> PacoteSlow::getSid(){
+vector<uint8_t> PacoteSlow::getSid() const {
     /**
      * Retorna o identificador único do pacote (SID) como um vetor de bytes.
      */
@@ -134,61 +134,62 @@ vector<uint8_t> PacoteSlow::getSid(){
     return sidBytes;
 }
 
-uint32_t PacoteSlow::getSttl() {
+uint32_t PacoteSlow::getSttl() const {
     /**
      * Retorna o tempo de vida do pacote (STTL) como um valor inteiro.
      */
     return sttl.to_ulong();
 }
 
-bitset<5> PacoteSlow::getFlags() {
+bitset<5> PacoteSlow::getFlags() const {
     /**
      * Retorna as flags do pacote.
      */
     return flags;
 }
 
-uint32_t PacoteSlow::getSeqNum() {
+uint32_t PacoteSlow::getSeqNum() const {
     /**
      * Retorna o número de sequência do pacote (SEQNUM).
      */
     return seqNum;
 }
 
-uint32_t PacoteSlow::getAckNum() {
+uint32_t PacoteSlow::getAckNum() const {
     /**
      * Retorna o número de reconhecimento do pacote (ACKNUM).
      */
     return ackNum;
 }
 
-uint16_t PacoteSlow::getWindow() {
+uint16_t PacoteSlow::getWindow() const {
     /**
      * Retorna a janela de bytes do pacote (WINDOW).
      */
     return window;
 }
 
-uint8_t PacoteSlow::getFid() {
+uint8_t PacoteSlow::getFid() const {
     /**
      * Retorna o identificador do fluxo do pacote (FID).
      */
     return fid;
 }
 
-uint8_t PacoteSlow::getFo() {
+uint8_t PacoteSlow::getFo() const {
     /**
      * Retorna o offset do fluxo do pacote (FO).
      */
     return fo;
 }
 
-vector<uint8_t> PacoteSlow::getData() {
+vector<uint8_t> PacoteSlow::getData() const {
     /**
      * Retorna os dados do pacote como um vetor de bytes.
      */
     return data;
 }
+
 
 bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
     /**
@@ -231,8 +232,6 @@ vector<uint8_t> PacoteSlow::getPacote() {
     uint32_t flagsValue = flags.to_ulong();
     uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
     adicionar4BytesAoPacote(pacote, sttlFlags);
-
-    cout << "Flags: " << static_cast<long long int> (sttlFlags) << endl;
 
     // SeqNum
     adicionar4BytesAoPacote(pacote, seqNum);
@@ -315,7 +314,37 @@ PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido)
     vector<uint8_t> dados(pacoteRecebido.begin() + 32, pacoteRecebido.end());
     pacote.setData(dados, dados.size());
 
-    cout << "Pacote criado com sucesso." << endl;
-
     return pacote;
+}
+
+void imprimirPacote(const PacoteSlow& pacote, string tipoPacote) {
+    /**
+     * Imprime os detalhes do pacote no console.
+     */
+    cout << "---------------------------------------------------" << endl;
+    cout << "Detalhes do Pacote: " << tipoPacote << " =>" << endl;
+    cout << "SID: ";
+    vector<uint8_t> sid = pacote.getSid();
+    for(int i = 0; i < 16; i++) {
+        cout << static_cast<int>(sid[i]) << " ";
+    }
+    cout << endl;
+    cout << "STTL: " << pacote.getSttl() << endl;
+    cout << "Flags: " << pacote.getFlags() << endl;
+    cout << "SeqNum: " << pacote.getSeqNum() << endl;
+    cout << "AckNum: " << pacote.getAckNum() << endl;
+    cout << "Window: " << pacote.getWindow() << endl;
+    cout << "FID: " << static_cast<int>(pacote.getFid()) << endl;
+    cout << "FO: " << static_cast<int>(pacote.getFo()) << endl;
+
+
+    vector<uint8_t> data = pacote.getData();
+    cout << "Data: ";
+    for(uint8_t byte : data) {
+        cout << static_cast<char>(byte);
+    }
+
+    cout << endl;
+
+    cout << "---------------------------------------------------" << endl << endl;
 }

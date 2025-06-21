@@ -33,19 +33,21 @@ public:
     bool setFo(uint8_t newFo);
     bool setData(const vector<uint8_t>& newData, size_t numBytes);
 
-    vector<uint8_t> getSid();
-    uint32_t getSttl();
-    bitset<5> getFlags();
-    uint32_t getSeqNum();
-    uint32_t getAckNum();
-    uint16_t getWindow();
-    uint8_t getFid();
-    uint8_t getFo();
-    vector<uint8_t> getData();
+    vector<uint8_t> getSid() const;
+    uint32_t getSttl() const;
+    bitset<5> getFlags() const;
+    uint32_t getSeqNum() const;
+    uint32_t getAckNum() const;
+    uint16_t getWindow() const;
+    uint8_t getFid() const;
+    uint8_t getFo() const;
+    vector<uint8_t> getData() const;
+
 
     vector<uint8_t> getPacote();
 };
 
 PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido);
+void imprimirPacote(const PacoteSlow& pacote, string tipoPacote);
 
 #endif
