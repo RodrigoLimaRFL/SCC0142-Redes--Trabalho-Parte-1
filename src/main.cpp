@@ -1,6 +1,7 @@
 #include <iostream>
 #include "fragmentacao.hpp"
 #include "session.hpp"
+#include "processos/3wayConnect.hpp"
 
 int main() {
     Session session;
