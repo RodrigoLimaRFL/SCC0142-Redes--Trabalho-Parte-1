@@ -37,18 +37,57 @@ bool startSocket(string hostname, int port) {
     memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length); // IP do server
 
     // Definir timeout de 5 segundos para recepção
-    struct timeval timeout;
+    /*struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
 
     if (setsockopt(UDP_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         perror("Erro ao configurar timeout de recepção");
         return false;
-    }
+    }*/
 
     return true;
 }
 
+// Controle de parada
+std::atomic<bool> pararThreads(false);
+
+// Thread de envio
+void threadEnviar(PacoteSlow packet) {
+    vector<uint8_t> packet_vector = packet.getPacote();
+    ssize_t sent_bytes = sendto(UDP_socket, packet_vector.data(), packet_vector.size(), 0, 
+                                reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
+
+    if (sent_bytes < 0) {
+        cout << "Erro ao enviar o pacote" << endl;
+        close(UDP_socket);
+        pararThreads = true; // Sinaliza erro
+    } else {
+        cout << "Pacote enviado com sucesso (" << sent_bytes << " bytes)\n";
+    }
+}
+
+// Thread de recepção
+void threadReceber(PacoteSlow& pacoteRecebido) {
+    uint8_t response[1472] = {};
+    sockaddr_in from_addr{};
+    socklen_t from_len = sizeof(from_addr);
+
+    ssize_t received_bytes = recvfrom(UDP_socket, response, 1472, 0,
+                                      (sockaddr*)&from_addr, &from_len);
+
+    if (received_bytes < 0) {
+        perror("Erro ao receber pacote");
+        pararThreads = true;
+    } else {
+        vector<uint8_t> response_vector(response, response + received_bytes);
+        pacoteRecebido = criarPacote(response_vector);
+        cout << "Resposta recebida com " << received_bytes << " bytes\n";
+        imprimirPacote(pacoteRecebido, "Resposta Recebida");
+    }
+}
+
+// Versão com threads
 PacoteSlow sendReceive(PacoteSlow packet) {
     /**
      * Função para enviar e receber pacotes via socket UDP.
@@ -59,6 +98,25 @@ PacoteSlow sendReceive(PacoteSlow packet) {
      * Returns:
      * - PacoteSlow: Pacote recebido como resposta.
      */
+    PacoteSlow pacoteRecebido;
+
+    std::thread t1(threadEnviar, packet);
+    std::thread t2(threadReceber, std::ref(pacoteRecebido));
+
+    t1.join(); // Aguarda envio
+    t2.join(); // Aguarda recepção
+
+    if (pararThreads) {
+        cout << "Erro durante envio ou recepção" << endl;
+        return {};
+    }
+
+    return pacoteRecebido;
+}
+
+/*
+PacoteSlow sendReceive(PacoteSlow packet) {
+    
 
     // === SEND ===
 
@@ -72,7 +130,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     cout << endl;
     cout << "Tamanho " << packet_vector.size() << endl;
-    */
+
 
 
     // uint8_t* packet_data = packet_vector.data();
@@ -131,7 +189,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
     for(int i = 0; i < 5; i++) {
         cout << ((flags_byte >> i) & 1) << " ";
     }
-    cout << endl;*/
+    cout << endl;
 
     // Cria um vetor de bytes a partir da resposta recebida
     // e converte para um objeto PacoteSlow
@@ -140,7 +198,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     // Retorna o pacote recebido
     return pacoteRecebido;
-}
+}*/
 
 
 void closeConnection() {

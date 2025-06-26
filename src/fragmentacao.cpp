@@ -1,4 +1,18 @@
 #include "fragmentacao.hpp"
+#include <map>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+
+std::mutex janela_mutex;
+std::condition_variable janela_cv;
+
+int tamanhoJanelaTotal = 0;
+int janelaEfetivaDisponivel = 0;
+
+// Mapeia seqNum → tamanho do pacote enviado
+std::map<uint32_t, int> pacotesEnviados;
+
 
 template <size_t N>
 bitset<N> vectorToBitset(const std::vector<uint8_t>& vec) {
@@ -85,6 +99,35 @@ vector<vector<uint8_t>> fragmentarDados(vector<uint8_t> dados, Session& session)
     return dadosParaPacotes;
 }
 
+std::thread iniciarThreadAck(Session& session) {
+    return std::thread([&session]() {
+        while (!pararThreads.load()) {
+            PacoteSlow ack;
+            threadReceber(ack);
+
+            uint32_t ackNum = ack.getAckNum();
+
+            {
+                std::lock_guard<std::mutex> lock(janela_mutex);
+
+                auto it = pacotesEnviados.begin();
+                while (it != pacotesEnviados.end()) {
+                    if (it->first < ackNum) {
+                        janelaEfetivaDisponivel += it->second;
+                        it = pacotesEnviados.erase(it);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+
+            session.setAckNum(ackNum);
+            janela_cv.notify_all();
+        }
+    });
+}
+
+
 uint8_t fragmentId = 0; // ID do fragmento
 
 bool fragmentarEEnviarDados(
@@ -97,85 +140,67 @@ bool fragmentarEEnviarDados(
     TiposDeEnvio tipoEnvio,
     Session& session
 ) {
-    /**
-     * Fragmenta e envia os dados para o servidor.
-     * 
-     * Params:
-     * - uuid: Identificador único da sessão.
-     * - sttl: Tempo de vida da sessão.
-     * - ultimoSeqNum: Último número de sequência enviado.
-     * - ultimoAckNum: Último número de reconhecimento recebido.
-     * - window: Tamanho da janela de controle.
-     * - dados: Dados a serem enviados.
-     * - tipoEnvio: Tipo de envio (DATA ou REVIVE).
-     * - session: Sessão atual.
-     * 
-     * Returns:
-     * - true se os pacotes foram enviados com sucesso, false caso contrário.
-     */
     vector<vector<uint8_t>> pacotes = fragmentarDados(dados, session);
+
+    tamanhoJanelaTotal = session.getWindow();
+    janelaEfetivaDisponivel = tamanhoJanelaTotal;
 
     bitset<128> uuidBits = vectorToBitset<128>(uuid);
     bitset<27> sttlBits = uInt32ToBitset<27>(sttl);
     
-    // Realiza fragmentação e envio de dados
-    for(size_t i = 0; i < pacotes.size(); i++) {
+    for (size_t i = 0; i < pacotes.size(); i++) {
         bool maisDados = (i < pacotes.size() - 1);
         if (session.getSTTL() <= 0) {
             cout << "Sessão expirada. Não é possível enviar pacotes." << endl;
-            return false; // Se o STTL for 0, não envia pacotes
+            return false;
         }
+
         PacoteSlow pacote = setPacketToSend(
-            uuidBits, 
-            sttlBits, 
-            ultimoSeqNum, 
-            ultimoAckNum, 
-            window, 
-            maisDados, 
+            uuidBits,
+            sttlBits,
+            ultimoSeqNum,
+            ultimoAckNum,
+            tamanhoJanelaTotal,
+            maisDados,
             pacotes[i]
         );
-        pacote.setFid(fragmentId); // Define o ID do fragmento como 0
-        pacote.setFo(i); // Define o offset do fragmento como o índice do pacote
-        ultimoSeqNum++; // Incrementa o número de sequência para o próximo pacote
+        pacote.setFid(fragmentId);
+        pacote.setFo(i);
+        int tamanhoPacote = pacote.getPacote().size();
 
-        PacoteSlow pacoteResposta;
-
-        if(tipoEnvio == TiposDeEnvio::REVIVE && i == 0) {
-            bitset<5> flags = pacote.getFlags();
-            flags.set(1, 1); // Define o bit de Revive
-            pacote.setFlags(flags); // Atualiza as flags do pacote
-
-            imprimirPacote(pacote, "Pacote de Revive");
-
-            pacoteResposta = sendReceive(pacote);
-
-            imprimirPacote(pacoteResposta, "Resposta do Revive");
-
-            bitset<5> flagsResposta = pacoteResposta.getFlags();
-
-            if(flagsResposta.test(3))
-            {
-                cout << "Servidor aceitou o revive." << endl;
-            }
-            else
-            {
-                cout << "Servidor rejeitou o revive." << endl;
-                return false; // Se o revive for rejeitado, não continua o envio
-            }
-        }
-        else
         {
-            imprimirPacote(pacote, "Pacote de Dados");
-            pacoteResposta = sendReceive(pacote);
-            imprimirPacote(pacoteResposta, "Resposta do Pacote de Dados");
-            uint32_t seqNumResposta = pacoteResposta.getSeqNum();
-            session.setSeqNum(seqNumResposta); // Atualiza o número de sequência da sessão
+            std::unique_lock<std::mutex> lock(janela_mutex);
+            janela_cv.wait(lock, [&]() {
+                return janelaEfetivaDisponivel >= tamanhoPacote;
+            });
+
+            janelaEfetivaDisponivel -= tamanhoPacote;
+            pacotesEnviados[ultimoSeqNum] = tamanhoPacote;
         }
 
-        // fazer os prints aqui
+        imprimirPacote(pacote, "Pacote de Dados");
+
+        if (tipoEnvio == TiposDeEnvio::REVIVE && i == 0) {
+            // Envia o pacote e aguarda a resposta imediatamente
+            PacoteSlow resposta = sendReceive(pacote);
+            imprimirPacote(resposta, "Resposta do Revive");
+
+            bitset<5> flagsResposta = resposta.getFlags();
+            if (!flagsResposta.test(3)) { // bit 3 == 0 => rejeitado
+                cout << "Servidor rejeitou o revive. Encerrando programa." << endl;
+                exit(EXIT_FAILURE);
+            } else {
+                cout << "Servidor aceitou o revive. Continuando o envio." << endl;
+            }
+        } else {
+            // Envia pacote de forma assíncrona
+            std::thread(threadEnviar, pacote).detach();
+        }
+
+        ultimoSeqNum++;
     }
 
-    fragmentId++; // Fim dos fragmentos
+    fragmentId++;
 
-    return true; // Retorna true se todos os pacotes foram enviados com sucesso
+    return true;
 }
