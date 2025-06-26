@@ -29,11 +29,11 @@ int main() {
     // "Setup (central): ...flags: Accept (1) / Reject (0)"
     // Check if connection was accepted
     cout << response.getFlags() << endl;
-    if (!response.getFlags().test(3)) { // Accept/Reject flag is at bit 3
+    /*if (!response.getFlags().test(3)) { // Accept/Reject flag is at bit 3
         std::cout << "Conexão rejeitada pelo servidor. Encerrando programa..." << std::endl;
         closeConnection();
         return 1;
-    }
+    }*/
 
     // Atualiza a sessão com os valores recebidos do pacote Setup (UUID, STTL, SeqNum, AckNum, Window)
     session.setValues(response);
