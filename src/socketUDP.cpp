@@ -1,3 +1,4 @@
+// socketUDP.cpp
 #include "socketUDP.hpp"
 
 using namespace std;
@@ -9,7 +10,7 @@ sockaddr_in server_addr{}; // Endereço do servidor
 bool startSocket(string hostname, int port) {
     /**
      * Função para iniciar o socket UDP.
-     * 
+     *
      * Params:
      * - hostname: Nome do host do servidor.
      * - port: Porta do servidor.
@@ -52,10 +53,10 @@ bool startSocket(string hostname, int port) {
 PacoteSlow sendReceive(PacoteSlow packet) {
     /**
      * Função para enviar e receber pacotes via socket UDP.
-     * 
+     *
      * Params:
      * - packet: Pacote a ser enviado.
-     * 
+     *
      * Returns:
      * - PacoteSlow: Pacote recebido como resposta.
      */
@@ -95,7 +96,7 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     //  === RECEIVE ===  
     // Cria um buffer para armazenar a resposta
-    uint8_t response[1472];
+    uint8_t response[1472]; // Max packet size is 1472 bytes [cite: 13]
     memset(response, 0, sizeof(response));
 
     // Recebe a resposta do servidor
@@ -123,10 +124,10 @@ PacoteSlow sendReceive(PacoteSlow packet) {
         cout << "[" << static_cast<int>(response[i]) << " - (" << i << ")] ";
     }
 
-    // O byte 16 contém as flags nos seus 5 bits menos significativos.
+    // O byte 16 contém as flags nos seus 5 bits menos significativos. [cite: 13, 14]
     uint8_t flags_byte = response[16]; 
 
-    // Imprime as flags da menos significativa (MB) para a mais significativa (C)
+    // Imprime as flags da menos significativa (MB) para a mais significativa (C) [cite: 14]
     cout << "\nFlags (na ordem MB, A/R, ACK, R, C): "; 
     for(int i = 0; i < 5; i++) {
         cout << ((flags_byte >> i) & 1) << " ";

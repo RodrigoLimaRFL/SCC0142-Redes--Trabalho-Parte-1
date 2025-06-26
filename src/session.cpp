@@ -1,3 +1,4 @@
+// session.cpp
 #include "session.hpp"
 
 Session::Session() :running(false), uuid(16, 0), sttl(0), seqNum(0), ackNum(0) {}
@@ -8,6 +9,7 @@ Session::Session() :running(false), uuid(16, 0), sttl(0), seqNum(0), ackNum(0) {
  * - sttl: Tempo de vida da sessão (TTL) é inicializado com zero.
  * - seqNum: Número de sequência da sessão é inicializado com zero.
  * - ackNum: Número de reconhecimento da sessão é inicializado com zero.
+ * - window: Janela de bytes (16 bits) é inicializada com zero.
  */
 
 vector<uint8_t> Session::getUUID() {
@@ -20,11 +22,15 @@ vector<uint8_t> Session::getUUID() {
 bitset<128> Session::getUUIDBits() {
     /**
      * Retorna o identificador único da sessão (UUID) como um bitset de 128 bits.
+     * This conversion assumes the `uuid` vector stores bytes in the order
+     * that directly maps to bitset indices for the `PacoteSlow`'s `sid` field.
+     * Given "Todos os bits são little endian", `uuid[i]` is the i-th byte, [cite: 13]
+     * and `(uuid[i] >> j) & 0x01` extracts the j-th bit (LSB first) for `sidBits[i * 8 + j]`.
      */
     
     bitset<128> uuidBits;
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 8; j++) {
+    for (int i = 0; i < 16; i++) { // For each of the 16 bytes
+        for (int j = 0; j < 8; j++) { // For each bit in the byte (little-endian)
             uuidBits[i * 8 + j] = (uuid[i] >> j) & 0x01;
         }
     }
@@ -35,10 +41,10 @@ bool Session::setUUID(const vector<uint8_t>& newUUID) {
     /**
      * Define o identificador único da sessão (UUID).
      * O UUID deve ser um vetor de 16 bytes.
-     * 
+     *
      * Params:
      * - newUUID: Novo UUID a ser definido.
-     * 
+     *
      * Returns:
      * - true se o UUID foi definido com sucesso, false se o tamanho do UUID for inválido.
      */
@@ -52,7 +58,7 @@ bool Session::setUUID(const vector<uint8_t>& newUUID) {
 uint32_t Session::getSTTL() {
     /**
      * Retorna o tempo de vida da sessão (STTL).
-     * 
+     *
      * Returns:
      * - uint32_t: O tempo de vida da sessão em segundos.
      */
@@ -62,22 +68,22 @@ uint32_t Session::getSTTL() {
 bool Session::setSTTL(uint32_t newSTTL) {
     /**
      * Define o tempo de vida da sessão (STTL).
-     * 
+     *
      * Params:
      * - newSTTL: Novo tempo de vida a ser definido.
-     * 
+     *
      * Returns:
      * - true se o STTL foi definido com sucesso.
      */
     sttl = newSTTL;
-    startTTLTimer();
+    startTTLTimer(); // Start/restart the TTL timer when STTL is set
     return true;
 }
 
 uint32_t Session::getSeqNum() {
     /**
      * Retorna o número de sequência da sessão (SEQNUM).
-     * 
+     *
      * Returns:
      * - uint32_t: O número de sequência da sessão.
      */
@@ -87,10 +93,10 @@ uint32_t Session::getSeqNum() {
 bool Session::setSeqNum(uint32_t newSeqNum) {
     /**
      * Define o número de sequência da sessão (SEQNUM).
-     * 
+     *
      * Params:
      * - newSeqNum: Novo número de sequência a ser definido.
-     * 
+     *
      * Returns:
      * - true se o SEQNUM foi definido com sucesso.
      */
@@ -101,7 +107,7 @@ bool Session::setSeqNum(uint32_t newSeqNum) {
 uint32_t Session::getAckNum() {
     /**
      * Retorna o número de reconhecimento da sessão (ACKNUM).
-     * 
+     *
      * Returns:
      * - uint32_t: O número de reconhecimento da sessão.
      */
@@ -111,10 +117,10 @@ uint32_t Session::getAckNum() {
 bool Session::setAckNum(uint32_t newAckNum) {
     /**
      * Define o número de reconhecimento da sessão (ACKNUM).
-     * 
+     *
      * Params:
      * - newAckNum: Novo número de reconhecimento a ser definido.
-     * 
+     *
      * Returns:
      * - true se o ACKNUM foi definido com sucesso.
      */
@@ -125,7 +131,7 @@ bool Session::setAckNum(uint32_t newAckNum) {
 uint16_t Session::getWindow() {
     /**
      * Retorna a janela de controle da sessão (WINDOW).
-     * 
+     *
      * Returns:
      * - uint16_t: A janela de controle da sessão.
      */
@@ -135,10 +141,10 @@ uint16_t Session::getWindow() {
 bool Session::setWindow(uint16_t newWindow) {
     /**
      * Define a janela de controle da sessão (WINDOW).
-     * 
+     *
      * Params:
      * - newWindow: Nova janela de controle a ser definida.
-     * 
+     *
      * Returns:
      * - true se a janela foi definida com sucesso.
      */
@@ -149,10 +155,10 @@ bool Session::setWindow(uint16_t newWindow) {
 bool Session::setValues(PacoteSlow pacote) {
     /**
      * Define os valores da sessão a partir de um pacote recebido.
-     * 
+     *
      * Params:
      * - pacote: Pacote recebido contendo os valores a serem definidos na sessão.
-     * 
+     *
      * Returns:
      * - true se os valores foram definidos com sucesso.
      */
@@ -169,23 +175,27 @@ Session::~Session() {
 }
 
 void Session::startTTLTimer() {
-    if (running) return; // Already running
+    if (running) { // If already running, stop and restart to apply new STTL
+        stopTTLTimer();
+    }
 
     running = true;
     ttlThread = std::thread([this]() {
         while (running && sttl > 0) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
+            // Ensure thread-safe access if 'sttl' could be modified elsewhere
+            // For now, it's only modified by setSTTL, which stops/restarts the thread.
             if (sttl > 0) {
                 --sttl;
             }
         }
+        running = false; // Set to false when timer naturally expires
     });
 }
 
 void Session::stopTTLTimer() {
     running = false;
     if (ttlThread.joinable()) {
-        ttlThread.join();
+        ttlThread.join(); // Wait for the thread to finish
     }
 }
-

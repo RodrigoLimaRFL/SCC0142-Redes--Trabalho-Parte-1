@@ -3,6 +3,11 @@
     #include "socketUDP.hpp"
     #include "mensagens.hpp"
     #include "session.hpp"
+    #include <algorithm> // For std::min
+    #include <iostream> // For std::cerr and std::cout
+    #include <thread>   // For std::thread
+    #include <future>   // For std::async and std::future
+    #include <chrono>   // For std::chrono::seconds
 
     enum TiposDeEnvio {
         DATA,

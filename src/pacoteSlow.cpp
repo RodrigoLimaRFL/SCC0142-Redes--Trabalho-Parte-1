@@ -1,3 +1,4 @@
+// pacoteSlow.cpp
 #include "pacoteSlow.hpp"
 
 using namespace std;
@@ -6,20 +7,20 @@ PacoteSlow::PacoteSlow() {
     /**
      * Construtor da classe PacoteSlow.
      * Inicializa os campos do pacote com valores padrão.
-     * - sid: Identificador único do pacote (128 bits) é inicializado com zeros.
-     * - sttl: Tempo de vida do pacote (27 bits) é inicializado com zeros.
-     * - flags: Conjunto de flags (5 bits) é inicializado com zeros.
-     * - seqNum: Número de sequência (32 bits) é inicializado com zero.
-     * - ackNum: Número de reconhecimento (32 bits) é inicializado com zero.
-     * - window: Janela de bytes (16 bits) é inicializada com zero.
-     * - fid: Identificador do fluxo (8 bits) é inicializado com zero.
-     * - fo: Offset do fluxo (8 bits) é inicializado com zero.
-     * - data: Vetor de dados é inicializado como vazio.
+     * - sid: Identificador único do pacote (128 bits) é inicializado com zeros. [cite: 13]
+     * - sttl: Tempo de vida do pacote (27 bits) é inicializado com zeros. [cite: 15]
+     * - flags: Conjunto de flags (5 bits) é inicializado com zeros. [cite: 14]
+     * - seqNum: Número de sequência (32 bits) é inicializado com zero. [cite: 15]
+     * - ackNum: Número de reconhecimento (32 bits) é inicializado com zero. [cite: 15]
+     * - window: Janela de bytes (16 bits) é inicializada com zero. [cite: 16]
+     * - fid: Identificador do fluxo (8 bits) é inicializado com zero. [cite: 16]
+     * - fo: Offset do fluxo (8 bits) é inicializado com zero. [cite: 16]
+     * - data: Vetor de dados é inicializado como vazio. [cite: 17]
      */
 
     sid.reset();
     sttl.reset();
-    flags.reset(); // Connect, Revive, ACK, Accept/Reject, More Bits
+    flags.reset(); // Connect, Revive, ACK, Accept/Reject, More Bits [cite: 14]
     seqNum = 0;
     ackNum = 0;
     window = 0;
@@ -95,11 +96,12 @@ bool PacoteSlow::setFo(uint8_t newFo) {
 bool PacoteSlow::setData(const vector<uint8_t>& newData, size_t numBytes) {
     /**
      * Define os dados do pacote.
-     * 
+     *
      * Params:
      * - newData: Vetor de bytes contendo os dados a serem definidos no pacote.
      * - numBytes: Número de bytes a serem copiados do vetor newData para o pacote.
      */
+    // "data: Data, máximo de 1440 bytes." [cite: 17]
     if(numBytes < 0 || numBytes > 1440) {
         cerr << "Erro: Tamanho de dados inválido. Deve ser entre 0 e 1440 bytes." << endl;
         return false;
@@ -122,9 +124,12 @@ vector<uint8_t> PacoteSlow::getSid() const {
 
     // Itera por cada um dos 16 bytes que formam o SID
     for(int i = 0; i < 16; i++) {
-        // Itera por cada um dos 8 bits que formam o byte atual
+        // Itera por cada um de 8 bits que formam o byte atual
         for(int j = 0; j < 8; j++) {
             // Se o bit na posição correspondente do bitset<128> for 1...
+            // "Todos os bits são little endian." [cite: 13]
+            // So, bitset[0] is the LSB of the first byte, bitset[7] is MSB of first byte,
+            // bitset[8] is LSB of second byte, etc.
             if (sid[i * 8 + j]) {
                 // ...ativa o bit correspondente no byte atual.
                 sidBytes[i] |= (1 << j);
@@ -194,8 +199,10 @@ vector<uint8_t> PacoteSlow::getData() const {
 bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor) {
     /**
      * Adiciona um valor de 4 bytes ao pacote.
+     * "Todos os bits são little endian." [cite: 13]
+     * So, send the least significant byte first.
      */
-    for(int i = 0; i < 4; i++) { // Envia o byte menos significativo primeiro
+    for(int i = 0; i < 4; i++) {
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
@@ -204,8 +211,10 @@ bool PacoteSlow::adicionar4BytesAoPacote(vector<uint8_t>& pacote, uint32_t valor
 bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor) {
     /**
      * Adiciona um valor de 2 bytes ao pacote.
+     * "Todos os bits são little endian." [cite: 13]
+     * So, send the least significant byte first.
      */
-    for(int i = 0; i < 2; i++) { // Envia o byte menos significativo primeiro
+    for(int i = 0; i < 2; i++) {
         pacote.push_back((valor >> (i * 8)) & 0xFF);
     }
     return true;
@@ -214,39 +223,40 @@ bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor
 vector<uint8_t> PacoteSlow::getPacote() {
     /**
      * Gera o pacote completo a partir dos campos definidos na classe.
+     * "Todos os bits são little endian." [cite: 13]
      */
     vector<uint8_t> pacote;
 
-    // SID
-
+    // SID (128 bits = 16 bytes) [cite: 13]
     for(int i = 0; i < 16; i++) {
         uint8_t byte = 0;
         for(int j = 0; j < 8; j++) {
-            byte |= (sid[i * 8 + j] << j);
+            byte |= (sid[i * 8 + j] << j); // Assemble byte in little-endian order
         }
         pacote.push_back(byte);
     }
 
-    // TTL + Flags
+    // STTL (27 bits) + Flags (5 bits) = 32 bits = 4 bytes [cite: 14, 15]
     uint32_t sttlValue = sttl.to_ulong();
     uint32_t flagsValue = flags.to_ulong();
+    // STTL occupies higher 27 bits, Flags occupy lower 5 bits
     uint32_t sttlFlags = (sttlValue << 5) | flagsValue;
     adicionar4BytesAoPacote(pacote, sttlFlags);
 
-    // SeqNum
+    // SeqNum (32 bits = 4 bytes) [cite: 15]
     adicionar4BytesAoPacote(pacote, seqNum);
 
-    // AckNum
+    // AckNum (32 bits = 4 bytes) [cite: 15]
     adicionar4BytesAoPacote(pacote, ackNum);
 
-    // Window
+    // Window (16 bits = 2 bytes) [cite: 16]
     adicionar2BytesAoPacote(pacote, window);
 
-    // Fid + Fo
+    // Fid (8 bits = 1 byte) + Fo (8 bits = 1 byte) [cite: 16]
     pacote.push_back(fid);
     pacote.push_back(fo);
 
-    // Dados
+    // Dados (max 1440 bytes) [cite: 17]
     pacote.insert(pacote.end(), data.begin(), data.end());
 
     return pacote;
@@ -260,57 +270,58 @@ PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido)
 
     cout << "Tamanho do pacote recebido: " << tamanhoPacote << " bytes" << endl;
 
-    if(tamanhoPacote < TAMANHO_CABECALHO_PACOTE) {
+    // Cabeçalho SLOW tem 32 bytes: 16 (SID) + 4 (STTL+Flags) + 4 (SeqNum) + 4 (AckNum) + 2 (Window) + 1 (Fid) + 1 (Fo) = 32 bytes [cite: 13, 14, 15, 16]
+    if(tamanhoPacote < TAMANHO_CABECALHO_PACOTE) { // TAMANHO_CABECALHO_PACOTE is 32
         cerr << "Erro: Pacote recebido muito pequeno." << endl;
         return pacote; // Retorna um pacote vazio
     }
 
-    // SID
+    // SID (16 bytes) [cite: 13]
     vector<uint8_t> sidBytes(pacoteRecebido.begin(), pacoteRecebido.begin() + 16);
     bitset<128> sidBits;
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 8; j++) {
-            sidBits[i * 8 + j] = (sidBytes[i] >> j) & 0x01;
+            sidBits[i * 8 + j] = (sidBytes[i] >> j) & 0x01; // Reconstruct bitset in little-endian
         }
     }
     pacote.setSid(sidBits);
 
-    // TTL + Flags
+    // TTL (27 bits) + Flags (5 bits) (4 bytes) [cite: 14, 15]
     uint32_t sttlFlags = 0;
     for(int i = 0; i < 4; i++) {
-        sttlFlags |= (pacoteRecebido[16 + i] << (i * 8));
+        sttlFlags |= (pacoteRecebido[16 + i] << (i * 8)); // Reconstruct 32-bit value in little-endian
     }
-    bitset<27> sttlBits((sttlFlags >> 5) & 0x07FFFFFF); // Extrai os 27 bits de TTL
-    bitset<5> flagsBits(sttlFlags & 0x1F); // Extrai os 5 bits de flags
+    bitset<27> sttlBits((sttlFlags >> 5) & 0x07FFFFFF); // Extract higher 27 bits for TTL
+    bitset<5> flagsBits(sttlFlags & 0x1F); // Extract lower 5 bits for flags
     pacote.setSttl(sttlBits);
     pacote.setFlags(flagsBits);
 
-    // SeqNum
+    // SeqNum (4 bytes) [cite: 15]
     uint32_t seqNum = 0;
     for(int i = 0; i < 4; i++) {
-        seqNum |= (pacoteRecebido[20 + i] << (i * 8));
+        seqNum |= (pacoteRecebido[20 + i] << (i * 8)); // Reconstruct 32-bit value in little-endian
     }
     pacote.setSeqNum(seqNum);
 
-    // AckNum
+    // AckNum (4 bytes) [cite: 15]
     uint32_t ackNum = 0;
     for(int i = 0; i < 4; i++) {
-        ackNum |= (pacoteRecebido[24 + i] << (i * 8));
+        ackNum |= (pacoteRecebido[24 + i] << (i * 8)); // Reconstruct 32-bit value in little-endian
     }
     pacote.setAckNum(ackNum);
 
-    // Window
+    // Window (2 bytes) [cite: 16]
     uint16_t window = 0;
     for(int i = 0; i < 2; i++) {
-        window |= (pacoteRecebido[28 + i] << (i * 8));
+        window |= (pacoteRecebido[28 + i] << (i * 8)); // Reconstruct 16-bit value in little-endian
     }
     pacote.setWindow(window);
     
-    // Fid + Fo
+    // Fid (1 byte) + Fo (1 byte) [cite: 16]
     pacote.setFid(pacoteRecebido[30]);
     pacote.setFo(pacoteRecebido[31]);
 
-    // Dados
+    // Dados (remaining bytes) [cite: 17]
     vector<uint8_t> dados(pacoteRecebido.begin() + 32, pacoteRecebido.end());
     pacote.setData(dados, dados.size());
 
@@ -330,7 +341,9 @@ void imprimirPacote(const PacoteSlow& pacote, string tipoPacote) {
     }
     cout << endl;
     cout << "STTL: " << pacote.getSttl() << endl;
-    cout << "Flags: " << pacote.getFlags() << endl;
+    cout << "Flags: " << pacote.getFlags() << endl; // Connect, Revive, ACK, Accept/Reject, More Bits [cite: 14]
+    // Order of flags in bitset: bit 0 (LSB) is Connect, bit 1 Revive, bit 2 ACK, bit 3 Accept/Reject, bit 4 (MSB) More Bits [cite: 14]
+    cout << " (C R A A/R MB)" << endl; // Clarify flag order
     cout << "SeqNum: " << pacote.getSeqNum() << endl;
     cout << "AckNum: " << pacote.getAckNum() << endl;
     cout << "Window: " << pacote.getWindow() << endl;
