@@ -37,14 +37,14 @@ bool startSocket(string hostname, int port) {
     memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length); // IP do server
 
     // Definir timeout de 5 segundos para recepção
-    /*struct timeval timeout;
-    timeout.tv_sec = 5;
+    struct timeval timeout;
+    timeout.tv_sec = 3;
     timeout.tv_usec = 0;
 
     if (setsockopt(UDP_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         perror("Erro ao configurar timeout de recepção");
         return false;
-    }*/
+    }
 
     return true;
 }
@@ -74,17 +74,25 @@ void threadReceber(PacoteSlow& pacoteRecebido) {
     socklen_t from_len = sizeof(from_addr);
 
     ssize_t received_bytes = recvfrom(UDP_socket, response, 1472, 0,
-                                      (sockaddr*)&from_addr, &from_len);
+                                        (sockaddr*)&from_addr, &from_len);
 
     if (received_bytes < 0) {
-        perror("Erro ao receber pacote");
-        pararThreads = true;
+        if (errno == EWOULDBLOCK || errno == EAGAIN) {
+            // Timeout: só ignorar
+            return;
+        } else {
+            perror("Erro ao receber pacote");
+            pararThreads = true;  // Erro fatal opcional
+            return;
+        }
     } else {
         vector<uint8_t> response_vector(response, response + received_bytes);
         pacoteRecebido = criarPacote(response_vector);
         cout << "Resposta recebida com " << received_bytes << " bytes\n";
-        imprimirPacote(pacoteRecebido, "Resposta Recebida");
+        imprimirPacote(pacoteRecebido, "Pacote Recebido");
     }
+
+    return;
 }
 
 // Versão com threads
