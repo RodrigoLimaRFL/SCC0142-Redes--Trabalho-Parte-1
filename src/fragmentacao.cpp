@@ -1,21 +1,18 @@
 #include "fragmentacao.hpp"
-#include <map>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
 
-std::mutex janela_mutex;
-std::condition_variable janela_cv;
+mutex janela_mutex; // Mutex para proteger o acesso à janela de envio
+condition_variable janela_cv; // Variável de condição para sincronização de threads
 
+// Variáveis globais para controle da janela de envio e pacotes enviados
 int tamanhoJanelaTotal = 0;
 int janelaEfetivaDisponivel = 0;
 
 // Mapeia seqNum → tamanho do pacote enviado
-std::map<uint32_t, int> pacotesEnviados;
+map<uint32_t, int> pacotesEnviados;
 
 
 template <size_t N>
-bitset<N> vectorToBitset(const std::vector<uint8_t>& vec) {
+bitset<N> vectorToBitset(const vector<uint8_t>& vec) {
     /*
     * Converte um vetor de bytes (uint8_t) em um bitset de tamanho N.
     * 
@@ -25,7 +22,7 @@ bitset<N> vectorToBitset(const std::vector<uint8_t>& vec) {
     * Returns:
     * - Um bitset de tamanho N representando os bits do vetor.
     */
-    std::bitset<N> bits;
+    bitset<N> bits;
 
     size_t bitIndex = 0;
     for (size_t byteIndex = 0; byteIndex < vec.size() && bitIndex < N; ++byteIndex) {
@@ -99,8 +96,17 @@ vector<vector<uint8_t>> fragmentarDados(vector<uint8_t> dados, Session& session)
     return dadosParaPacotes;
 }
 
-std::thread iniciarThreadAck(Session& session) {
-    return std::thread([&session]() {
+thread iniciarThreadAck(Session& session) {
+    /**
+     * Inicia uma thread que processa ACKs recebidos e atualiza a janela de envio.
+     * 
+     * Params:
+     * - session: Sessão atual para obter o número de sequência e reconhecimento.
+     * Returns:
+     * - Uma thread que processa ACKs e atualiza a janela de envio.
+     * 
+     */
+    return thread([&session]() {
         while (!pararThreads.load()) {
             PacoteSlow ack;
             threadReceber(ack);
@@ -108,7 +114,7 @@ std::thread iniciarThreadAck(Session& session) {
             uint32_t ackNum = ack.getAckNum();
 
             {
-                std::lock_guard<std::mutex> lock(janela_mutex);
+                lock_guard<mutex> lock(janela_mutex);
 
                 auto it = pacotesEnviados.begin();
                 while (it != pacotesEnviados.end()) {
@@ -140,6 +146,22 @@ bool fragmentarEEnviarDados(
     TiposDeEnvio tipoEnvio,
     Session& session
 ) {
+    /**
+     * Fragmenta os dados e envia pacotes de acordo com a sessão e tipo de envio.
+     * 
+     * Params:
+     * - uuid: UUID do cliente.
+     * - sttl: Tempo de vida do pacote.
+     * - ultimoSeqNum: Último número de sequência enviado.
+     * - ultimoAckNum: Último número de reconhecimento recebido.
+     * - window: Tamanho da janela de envio.
+     * - dados: Dados a serem fragmentados e enviados.
+     * - tipoEnvio: Tipo de envio (DATA ou REVIVE).
+     * 
+     * Returns:
+     * - true se os dados foram fragmentados e enviados com sucesso, false caso contrário.
+     * 
+     */
     vector<vector<uint8_t>> pacotes = fragmentarDados(dados, session);
 
     tamanhoJanelaTotal = session.getWindow();
@@ -169,7 +191,7 @@ bool fragmentarEEnviarDados(
         int tamanhoPacote = pacote.getPacote().size();
 
         {
-            std::unique_lock<std::mutex> lock(janela_mutex);
+            unique_lock<mutex> lock(janela_mutex);
             janela_cv.wait(lock, [&]() {
                 return janelaEfetivaDisponivel >= tamanhoPacote;
             });
@@ -194,7 +216,7 @@ bool fragmentarEEnviarDados(
             }
         } else {
             // Envia pacote de forma assíncrona
-            std::thread(threadEnviar, pacote).detach();
+            thread(threadEnviar, pacote).detach();
         }
 
         ultimoSeqNum++;

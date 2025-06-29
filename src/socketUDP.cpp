@@ -50,10 +50,16 @@ bool startSocket(string hostname, int port) {
 }
 
 // Controle de parada
-std::atomic<bool> pararThreads(false);
+atomic<bool> pararThreads(false);
 
 // Thread de envio
 void threadEnviar(PacoteSlow packet) {
+    /**
+     * Função para enviar pacotes via socket UDP.
+     * 
+     * Params:
+     * - packet: Pacote a ser enviado.
+     */
     vector<uint8_t> packet_vector = packet.getPacote();
     ssize_t sent_bytes = sendto(UDP_socket, packet_vector.data(), packet_vector.size(), 0, 
                                 reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
@@ -69,6 +75,12 @@ void threadEnviar(PacoteSlow packet) {
 
 // Thread de recepção
 void threadReceber(PacoteSlow& pacoteRecebido) {
+    /**
+     * Função para receber pacotes via socket UDP.
+     * 
+     * Params
+     * - pacoteRecebido: Referência para o pacote recebido que será preenchido.
+     */
     uint8_t response[1472] = {};
     sockaddr_in from_addr{};
     socklen_t from_len = sizeof(from_addr);
@@ -108,8 +120,8 @@ PacoteSlow sendReceive(PacoteSlow packet) {
      */
     PacoteSlow pacoteRecebido;
 
-    std::thread t1(threadEnviar, packet);
-    std::thread t2(threadReceber, std::ref(pacoteRecebido));
+    thread t1(threadEnviar, packet);
+    thread t2(threadReceber, ref(pacoteRecebido));
 
     t1.join(); // Aguarda envio
     t2.join(); // Aguarda recepção
@@ -121,93 +133,6 @@ PacoteSlow sendReceive(PacoteSlow packet) {
 
     return pacoteRecebido;
 }
-
-/*
-PacoteSlow sendReceive(PacoteSlow packet) {
-    
-
-    // === SEND ===
-
-    vector<uint8_t> packet_vector = packet.getPacote();
-
-    /*cout << "pacote do getPacote" << endl;
-
-    for(int j = 0; j < (int) packet_vector.size(); j++) {
-        cout << "[" << static_cast<int>(packet_vector[j]) << " - (" << j << ")] ";
-    }
-
-    cout << endl;
-    cout << "Tamanho " << packet_vector.size() << endl;
-
-
-
-    // uint8_t* packet_data = packet_vector.data();
-
-    // Envio                   (socket)     (endereco e tamanho do pacote)       (destino)
-    ssize_t sent_bytes = sendto(UDP_socket, packet_vector.data(), packet_vector.size(), 0, reinterpret_cast<sockaddr*>(&server_addr),
-                                  sizeof(server_addr));
-
-    // Verifica se houve erro no envio e cancela a conexão se necessário
-    if(sent_bytes < 0) {
-        cout << "Erro ao enviar o pacote" << endl;
-        close(UDP_socket);
-        return {};
-    }
-
-    cout << "Pacote enviado com sucesso (" << sent_bytes << " bytes)\n";
-    cout << "Esperando resposta..." << endl;
-
-
-
-    //  === RECEIVE ===  
-    // Cria um buffer para armazenar a resposta
-    uint8_t response[1472];
-    memset(response, 0, sizeof(response));
-
-    // Recebe a resposta do servidor
-    sockaddr_in from_addr{};
-    socklen_t from_len = sizeof(from_addr);
-    ssize_t received_bytes = recvfrom(UDP_socket, response, 1472, 0,
-                                (sockaddr*)&from_addr, &from_len);
-
-    // Verifica se houve erro na recepção
-    if (received_bytes < 0) {
-        perror("Erro ao receber pacote");
-    } else {
-        cout << "Resposta recebida com " << received_bytes << " bytes\n";
-
-    }
-
-    // Exibe o conteúdo da resposta em formato de caracteres e inteiros
-    /*cout << "Response in Chars:" << endl;
-    for(int i = 0; i < (int) received_bytes; i++) {
-        cout << (response[i]) << " ";
-    }
-
-    cout << endl << "Response in Ints:" << endl;
-    for(int i = 0; i < received_bytes; i++) {
-        cout << "[" << static_cast<int>(response[i]) << " - (" << i << ")] ";
-    }
-
-    // O byte 16 contém as flags nos seus 5 bits menos significativos.
-    uint8_t flags_byte = response[16]; 
-
-    // Imprime as flags da menos significativa (MB) para a mais significativa (C)
-    cout << "\nFlags (na ordem MB, A/R, ACK, R, C): "; 
-    for(int i = 0; i < 5; i++) {
-        cout << ((flags_byte >> i) & 1) << " ";
-    }
-    cout << endl;
-
-    // Cria um vetor de bytes a partir da resposta recebida
-    // e converte para um objeto PacoteSlow
-    vector<uint8_t> response_vector(response, response + received_bytes);
-    PacoteSlow pacoteRecebido = criarPacote(response_vector);
-
-    // Retorna o pacote recebido
-    return pacoteRecebido;
-}*/
-
 
 void closeConnection() {
     /**

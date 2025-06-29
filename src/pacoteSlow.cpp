@@ -214,6 +214,9 @@ bool PacoteSlow::adicionar2BytesAoPacote(vector<uint8_t>& pacote, uint16_t valor
 vector<uint8_t> PacoteSlow::getPacote() {
     /**
      * Gera o pacote completo a partir dos campos definidos na classe.
+     * 
+     * returns:
+     * - Um vetor de bytes representando o pacote completo.
      */
     vector<uint8_t> pacote;
 
@@ -254,6 +257,15 @@ vector<uint8_t> PacoteSlow::getPacote() {
 
 PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido)
 {
+    /**
+     * Cria um objeto PacoteSlow a partir de um vetor de bytes recebido.
+     * 
+     * params:
+     * - pacoteRecebido: Vetor de bytes que representa o pacote recebido.   
+     * returns:
+     * - Um objeto PacoteSlow preenchido com os dados do pacote recebido.
+     * 
+     */
     PacoteSlow pacote;
 
     size_t tamanhoPacote = pacoteRecebido.size();
@@ -320,6 +332,10 @@ PacoteSlow criarPacote(vector<uint8_t>& pacoteRecebido)
 void imprimirPacote(const PacoteSlow& pacote, string tipoPacote) {
     /**
      * Imprime os detalhes do pacote no console.
+     * 
+     * params:
+     * - pacote: O pacote a ser impresso.
+     * - tipoPacote: Uma string que indica o tipo do pacote (por exemplo,
      */
     cout << "---------------------------------------------------" << endl;
     cout << "Detalhes do Pacote: " << tipoPacote << " =>" << endl;

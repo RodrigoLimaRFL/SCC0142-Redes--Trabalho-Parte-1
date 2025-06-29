@@ -23,7 +23,7 @@ PacoteSlow createDisconnect(bitset<128> uuid, bitset<27> sttl, uint32_t seqnum, 
      * - Accept/Reject: 0
      * - More Bits: 0
      */
-    std::bitset<5> flags(std::string("11100"));
+    bitset<5> flags(string("11100"));
     pacote.setFlags(flags);
 
     // Define o SID recebido da central
@@ -110,7 +110,7 @@ PacoteSlow createConnect(uint16_t tamBufferRecebimento) {
      * - Accept/Reject: 0
      * - More Bits: 0
      */
-    std::bitset<5> flags(std::string("10000"));
+    bitset<5> flags(string("10000"));
     pacoteConnect.setFlags(flags);
 
     // Seta a Window do pacote de conexão

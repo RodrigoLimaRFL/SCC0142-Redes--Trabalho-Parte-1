@@ -3,6 +3,11 @@
 
 #include <thread>
 #include <atomic>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <map>
+
 
 // Inclui o tipo PacoteSlow
 #include "pacoteSlow.hpp"
@@ -23,6 +28,6 @@ void threadReceber(PacoteSlow& pacoteRecebido);
 void closeConnection();
 
 // Variável global para controle das threads
-extern std::atomic<bool> pararThreads;
+extern atomic<bool> pararThreads;
 
 #endif

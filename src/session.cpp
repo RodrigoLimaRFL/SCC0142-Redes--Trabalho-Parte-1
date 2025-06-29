@@ -172,9 +172,9 @@ void Session::startTTLTimer() {
     if (running) return; // Already running
 
     running = true;
-    ttlThread = std::thread([this]() {
+    ttlThread = thread([this]() {
         while (running && sttl > 0) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            this_thread::sleep_for(chrono::seconds(1));
             if (sttl > 0) {
                 --sttl;
             }

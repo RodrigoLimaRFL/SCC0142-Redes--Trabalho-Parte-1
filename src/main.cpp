@@ -1,24 +1,19 @@
 #include <iostream>
-#include <thread>
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
-#include <map>
 
 #include "fragmentacao.hpp"
 #include "session.hpp"
 #include "processos/3wayConnect.hpp"
 
 // Variáveis globais (declaradas externamente em fragmentacao.cpp)
-extern std::mutex janela_mutex;
-extern std::condition_variable janela_cv;
+extern mutex janela_mutex;
+extern condition_variable janela_cv;
 extern int tamanhoJanelaTotal;
 extern int janelaEfetivaDisponivel;
-extern std::map<uint32_t, int> pacotesEnviados;
-extern std::atomic<bool> pararThreads;
+extern map<uint32_t, int> pacotesEnviados;
+extern atomic<bool> pararThreads;
 
 // Protótipo da função para iniciar a thread de ACK
-std::thread iniciarThreadAck(Session& session);
+thread iniciarThreadAck(Session& session);
 
 // Protótipo da threadReceber (implementação na socketUDP.cpp)
 void threadReceber(PacoteSlow& pacote);
@@ -29,7 +24,7 @@ int main() {
 
     // Inicia o socket UDP
     if(!startSocket("slow.gmelodie.com", 7033)) {
-        std::cout << "Erro ao iniciar o socket UDP. Encerrando programa..." << std::endl;
+        cout << "Erro ao iniciar o socket UDP. Encerrando programa..." << endl;
         return 1;
     }
 
@@ -50,27 +45,27 @@ int main() {
     pararThreads = false;
 
     // Cria a thread que processa ACKs e atualiza janela
-    std::thread ackThread = iniciarThreadAck(session);
+    thread ackThread = iniciarThreadAck(session);
 
     bool disconnected = false;
 
     while (true) {
         if (!disconnected) {
-            std::cout << "Digite 'enviar' para enviar dados ou 'desconectar' para encerrar a conexão: ";
+            cout << "Digite 'enviar' para enviar dados ou 'desconectar' para encerrar a conexão: ";
         } else {
-            std::cout << "Desconectado. Digite 'enviar' para reestabelecer a conexão ou 'finalizar' para encerrar o programa: ";
+            cout << "Desconectado. Digite 'enviar' para reestabelecer a conexão ou 'finalizar' para encerrar o programa: ";
         }
 
-        std::string command;
-        std::cin >> command;
+        string command;
+        cin >> command;
 
-        if (command == "enviar") {
-            std::cout << "Digite os dados a serem enviados: ";
-            std::string inputData;
-            std::cin.ignore();
-            std::getline(std::cin, inputData);
+        if (command == "enviar") { // Enviando dados...
+            cout << "Digite os dados a serem enviados: ";
+            string inputData;
+            cin.ignore();
+            getline(cin, inputData);
 
-            std::vector<uint8_t> dataToSend(inputData.begin(), inputData.end());
+            vector<uint8_t> dataToSend(inputData.begin(), inputData.end());
 
             TiposDeEnvio tipoEnvio = TiposDeEnvio::DATA;
             if (disconnected) {
@@ -89,7 +84,7 @@ int main() {
             );
 
             if (!enviado) {
-                std::cout << "Erro ao enviar os dados. Encerrando programa..." << std::endl;
+                cout << "Erro ao enviar os dados. Encerrando programa..." << endl;
                 break;
             }
 
@@ -97,23 +92,23 @@ int main() {
             continue;
         }
 
-        if (command == "desconectar") {
+        if (command == "desconectar") { // Desconectando...
             PacoteSlow disconnectPacket = createDisconnect(session.getUUIDBits(), session.getSTTL(), session.getSeqNum(), session.getAckNum());
             imprimirPacote(disconnectPacket, "Pacote de Desconexão");
             PacoteSlow pacoteRespostaDisconnect = sendReceive(disconnectPacket);
             imprimirPacote(pacoteRespostaDisconnect, "Resposta do Pacote de Desconexão");
 
             disconnected = true;
-            std::cout << "Desconectado com sucesso." << std::endl;
+            cout << "Desconectado com sucesso." << endl;
             continue;
         }
 
         if (command == "finalizar" && disconnected) {
-            std::cout << "Obrigado por usar o programa. Pelo menos cinco bola!" << std::endl;
+            cout << "Obrigado por usar o programa!" << endl;
             break;
         }
 
-        std::cout << "Comando inválido. Tente novamente." << std::endl;
+        cout << "Comando inválido. Tente novamente." << endl;
     }
 
     // Finaliza thread de ACKs

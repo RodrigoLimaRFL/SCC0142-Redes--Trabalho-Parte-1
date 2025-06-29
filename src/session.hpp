@@ -13,8 +13,8 @@ using namespace std;
 
 class Session {
 private:
-    std::atomic<bool> running;       // Flag to control the thread
-    std::thread ttlThread;           // Background thread
+    atomic<bool> running;       // Flag to control the thread
+    thread ttlThread;           // Background thread
     vector<uint8_t> uuid; 
     uint32_t sttl;
     uint32_t seqNum;
