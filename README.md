@@ -1,17 +1,19 @@
 # SCC0142-Redes--Trabalho-Parte-1
 Projeto feito para a disciplina SCC0142 - Redes de Computadores (2025) administrada pela professora Kalinka Regina Lucas Jaquie Castelo Branco.
+
+Link do GitHub: https://github.com/RodrigoLimaRFL/SCC0142-Redes--Trabalho-Parte-1
 ## Integrantes
 - Henrique Drago
 - Henrique Sekido
 - Rodrigo Lima
 ## Passo-a-Passo para Executar o código
-### 1. Clonar o Repositório
+### 1. Clonar o Repositório (caso não tenha recebido código por outra fonte, ex: .zip)
 Rode no terminal: 
 ```
 git clone https://github.com/RodrigoLimaRFL/SCC0142-Redes--Trabalho-Parte-1.git
 ```
 ### 2. Executar o Programa
-Abra a pasta do repositório no temrinal, pode-se utilizar o seguinte comando caso continue imediatamente do passo anterior:
+Abra a pasta do repositório no terminal, pode-se utilizar o seguinte comando caso continue imediatamente do passo anterior:
 ```
 cd SCC0142-Redes--Trabalho-Parte-1
 ```
